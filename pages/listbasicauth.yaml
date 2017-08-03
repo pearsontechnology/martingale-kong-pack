@@ -1,0 +1,45 @@
+description: Lists all Basic Auth's associated with a configured consumer.
+$type: HeaderPage
+props:
+  title:
+    $map: '`${params.consumer} - Basic Auth Accounts`'
+children:
+  $type: Panel
+  props:
+    footer:
+      $type: Link
+      props:
+        caption: New
+        className: btn btn-primary
+        to:
+          $mapper: '`/kong/consumer/${params.consumer}/basic-auth`'
+  children:
+    $type: Provider
+    props:
+      provide:
+        data:
+          url:
+            $map: '`/api/kong/consumers/${params.consumer}/basic-auth`'
+          root: data
+          mapper:
+            $mapper: |-
+              props.map((ds)=>{
+                return {
+                  username: ds.username,
+                  created: new Date(ds.created_at),
+                  id: ds.id,
+                  consumer_id: ds.consumer_id
+                };
+              })
+      Component:
+        $component: ActionTable
+      props:
+        actions:
+          - link:
+              $mapper: '`/kong/consumer/${params.consumer}/basic-auth/${props.username}`'
+            caption: Edit
+            btnStyle: primary
+          - caption: Delete
+            delete: '/api/kong/consumers/${consumer_id}/basic-auth/${id}'
+            message: 'Are you sure you want to delete "${username||custom_id}"?'
+path: '/kong/consumers/:consumer/basic-auth-accounts'

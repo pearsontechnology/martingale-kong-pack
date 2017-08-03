@@ -1,0 +1,16 @@
+{
+  "name": "martingale-kong-pack",
+  "version": "0.0.1",
+  "description": "Martingale Pack file for Kong API Gateway",
+  "repository": "git@github.com:pearsontechnology/martingale-kong-pack.git",
+  "author": "Jeremy Darling <jeremy.darling@pearson.com>",
+  "scripts": {
+    "build": "mpack build",
+    "test": "mpack test",
+    "doc": "mpack doc"
+  },
+  "dependencies": {
+    "martingale-pack-builder": "^0.0.1"
+  },
+  "license": "MIT"
+}

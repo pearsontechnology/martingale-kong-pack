@@ -1,0 +1,44 @@
+description: Provides the ability to edit the configuration for a given SNI.
+$type: div
+children:
+  $type: HeaderPage
+  props:
+    title: Certificate
+  children:
+    - $type: Panel
+      props:
+        inset: true
+      children:
+        $type: Provider
+        props:
+          provide:
+            data:
+              url:
+                $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
+            schema:
+              url: /api/kong/certificates
+              mapper:
+                $mapper:
+                  type: '''object'''
+                  required:
+                    - '''name'''
+                  properties:
+                    name:
+                      type: '''string'''
+                      title: '''Name'''
+                    ssl_certificate_id:
+                      type: '''string'''
+                      title: '''Certificate'''
+                      enum: props.map(p=>p.id)
+                      enumNames: props.map(p=>p.cert)
+          props:
+            successUrl: /kong/snis
+            submitTo:
+              method:
+                $map: 'params.name?"PUT":"POST"'
+              url: /api/kong/snis
+          Component:
+            $component: Form
+paths:
+  - '/kong/sni/:name'
+  - /kong/sni

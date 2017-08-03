@@ -1,0 +1,19 @@
+description: Provides an overview of the current cluster.
+$type: HeaderPage
+props:
+  title: Kong Cluster
+children:
+  $type: Panel
+  children:
+    $type: Provider
+    props:
+      provide:
+        data:
+          url: /api/kong/cluster
+          root: data
+      Component:
+        $component: Table
+path: /kong/cluster
+icon: Cluster
+sideNav: true
+caption: Cluster

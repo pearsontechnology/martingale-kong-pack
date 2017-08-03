@@ -1,0 +1,64 @@
+name: Kong
+description: |
+  This pack provides screens that allow users to manage a Kong API Gateway instance.
+
+  **Required Endpoints:**
+
+  /api/kong should point to the admin port of the Kong instance (EG: http://kong:8001)
+pages:
+  KongDashboard:
+    $ref: pages/kongdashboard.yaml
+  PluginsListing:
+    $ref: pages/pluginslisting.yaml
+  NewPluginSelect:
+    $ref: pages/newpluginselect.yaml
+  EditPlugin:
+    $ref: pages/editplugin.yaml
+  Cluster:
+    $ref: pages/cluster.yaml
+  APIs:
+    $ref: pages/apis.yaml
+  APIPlugins:
+    $ref: pages/apiplugins.yaml
+  APISettings:
+    $ref: pages/apisettings.yaml
+  APIPluginConfig:
+    $ref: pages/apipluginconfig.yaml
+  APISelectNewPlugin:
+    $ref: pages/apiselectnewplugin.yaml
+  Consumers:
+    $ref: pages/consumers.yaml
+  Consumer:
+    $ref: pages/consumer.yaml
+  ListBasicAuth:
+    $ref: pages/listbasicauth.yaml
+  EditBasicAuth:
+    $ref: pages/editbasicauth.yaml
+  ListOAuth2:
+    $ref: pages/listoauth2.yaml
+  EditOAuth2:
+    $ref: pages/editoauth2.yaml
+  ListHMAC:
+    $ref: pages/listhmac.yaml
+  EditHMAC:
+    $ref: pages/edithmac.yaml
+  ListKey:
+    $ref: pages/listkey.yaml
+  EditKey:
+    $ref: pages/editkey.yaml
+  ListJWT:
+    $ref: pages/listjwt.yaml
+  EditJWT:
+    $ref: pages/editjwt.yaml
+  ListACL:
+    $ref: pages/listacl.yaml
+  EditACL:
+    $ref: pages/editacl.yaml
+  Certificates:
+    $ref: pages/certificates.yaml
+  Certificate:
+    $ref: pages/certificate.yaml
+  SNIs:
+    $ref: pages/snis.yaml
+  SNI:
+    $ref: pages/sni.yaml
