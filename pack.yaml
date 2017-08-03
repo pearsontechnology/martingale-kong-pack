@@ -62,3 +62,5 @@ pages:
     $ref: pages/snis.yaml
   SNI:
     $ref: pages/sni.yaml
+icon:
+  $ref: icon.yaml

@@ -74,7 +74,8 @@ children:
                   - running
                   - pending
 path: /kong/
-icon: Dashboard
 sideNav: true
-caption: Kong Dashboard
+caption: Dashboard
 isDashboard: true
+icon:
+  $ref: icon.yaml
