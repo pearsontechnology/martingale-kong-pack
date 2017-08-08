@@ -11,6 +11,33 @@ children:
       children:
         $type: Provider
         props:
+          mapper:
+            $mapper: |
+              (()=>{
+                const {
+                  plugins,
+                  apis
+                } = props;
+                if(Array.isArray(plugins) && Array.isArray(apis)){
+                  return Object.assign({}, props, {
+                    schema: {
+                      fields: {
+                        api: {
+                          type: 'string',
+                          enum: ['[global]', ...apis.map(api=>api.name)],
+                          default: '[global]'
+                        },
+                        pluginType: {
+                          type: 'string',
+                          enum: plugins,
+                          required: true
+                        }
+                      }
+                    }
+                  });
+                }
+                return props;
+              })();
           provide:
             apis:
               url: /api/kong/apis
@@ -22,6 +49,6 @@ children:
             $component: KongForm
           props:
             successUrl:
-              $mapper: >-
+              $mapper: |
                 props.api!=='[global]'?`/kong/api/${props.api}/plugin/${props.pluginType}`:`/kong/plugin/${props.pluginType}`
 path: /kong/plugin
