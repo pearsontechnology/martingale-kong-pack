@@ -17,6 +17,27 @@ children:
     children:
       $type: Provider
       props:
+        mapper:
+          $mapper: |
+            (()=>{
+              const {
+                apis,
+                data
+              } = props || {};
+              if(Array.isArray(apis) && Array.isArray(data)){
+                const newData = data.map((row)=>{
+                  if(row.api_id){
+                    const api = apis.find((api)=>api.id === row.api_id);
+                    if(api){
+                      return Object.assign({api: api.name||row.api_id}, row);
+                    }
+                  }
+                  return row;
+                });
+                return Object.assign({}, props, {data: newData});
+              }
+              return props;
+            })();
         provide:
           apis:
             url: /api/kong/apis
