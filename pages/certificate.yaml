@@ -21,9 +21,13 @@ children:
                 cert:
                   type: string
                   required: true
+                  multiline: true
                 key:
                   type: string
                   required: true
+                  multiline: true
+#                snis:
+#                  type: array
             successUrl: /kong/certificates
             submitTo:
               method:

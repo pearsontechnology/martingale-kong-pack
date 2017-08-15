@@ -11,26 +11,41 @@ children:
       children:
         $type: Provider
         props:
+          mapper:
+            $mapper: |
+              (()=>{
+                const {
+                  certs
+                } = props || {};
+                if(Array.isArray(certs)){
+                  const schema = {
+                    type: 'object',
+                    required: ['name'],
+                    properties: {
+                      name: {
+                        type: 'string',
+                        title: 'Name'
+                        },
+                        ssl_certificate_id: {
+                          type: 'string',
+                          title: 'Certificate',
+                          enum: certs.map(p=>p.id),
+                          enumNames: certs.map(p=>p.cert)
+                          },
+                      }
+                  };
+                  console.log('schema: ', schema)
+                  return Object.assign({}, props, {schema});
+                }
+                return props;
+              })();
           provide:
+            certs:
+              url: /api/kong/certificates
+              root: data
             data:
               url:
                 $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
-            schema:
-              url: /api/kong/certificates
-              mapper:
-                $mapper:
-                  type: '''object'''
-                  required:
-                    - '''name'''
-                  properties:
-                    name:
-                      type: '''string'''
-                      title: '''Name'''
-                    ssl_certificate_id:
-                      type: '''string'''
-                      title: '''Certificate'''
-                      enum: props.map(p=>p.id)
-                      enumNames: props.map(p=>p.cert)
           props:
             successUrl: /kong/snis
             submitTo:

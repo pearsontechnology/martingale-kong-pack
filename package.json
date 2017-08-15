@@ -7,7 +7,8 @@
   "scripts": {
     "build": "mpack build",
     "test": "mpack test -p 8082",
-    "doc": "mpack doc"
+    "doc": "mpack doc",
+    "docker": "mpack docker -p 8082"
   },
   "dependencies": {
     "martingale-pack-builder": "^0.0.1"
