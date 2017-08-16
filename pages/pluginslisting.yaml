@@ -34,6 +34,7 @@ children:
                   }
                   return row;
                 });
+                console.log(newData);
                 return Object.assign({}, props, {data: newData});
               }
               return props;
@@ -53,16 +54,22 @@ children:
               Name: props.name
               API: props.api
               Created At: new Date(props.created_at)
-              Enabled: props.enabled
           actions:
             - caption: Edit
-              link:
-                $mapper: '`/kong/plugin/${props.name}/${props.id}`'
+              link: /kong/plugin/${name}/${id}
               btnStyle: primary
             - caption: Delete
-              delete:
-                $mapper: '`/api/kong/plugins/${props.id}`'
+              delete: /api/kong/plugins/${id}
               message: 'Are you sure you want to delete "${name}"?'
+            - caption: ${enabled?'Disable':'Enable'}
+              btnStyle: ${enabled?'danger':'success'}
+              title: Disable ${name}
+              message: ${enabled?(typeof(api)!=='undefined'?'Are you sure you want to disable plugin "'+name+'" for "'+api+'"?':'Are you sure you want to disable plugin "'+name+'" globally?'):''}
+              fetch:
+                url: /api/kong/plugins/${id}
+                method: patch
+                payload:
+                  enabled: ${!enabled}
 icon: Plugin
 sideNav: true
 caption: Plugins
