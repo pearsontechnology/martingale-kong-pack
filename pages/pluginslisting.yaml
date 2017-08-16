@@ -34,7 +34,6 @@ children:
                   }
                   return row;
                 });
-                console.log(newData);
                 return Object.assign({}, props, {data: newData});
               }
               return props;
