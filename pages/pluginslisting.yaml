@@ -61,7 +61,7 @@ children:
               delete: /api/kong/plugins/${id}
               message: 'Are you sure you want to delete "${name}"?'
             - caption: ${enabled?'Disable':'Enable'}
-              btnStyle: ${enabled?'danger':'success'}
+              btnStyle: ${enabled?'warning':'success'}
               title: Disable ${name}
               message: ${enabled?(typeof(api)!=='undefined'?'Are you sure you want to disable plugin "'+name+'" for "'+api+'"?':'Are you sure you want to disable plugin "'+name+'" globally?'):''}
               fetch:
