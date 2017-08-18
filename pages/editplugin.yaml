@@ -15,19 +15,19 @@ children:
           provide:
             data:
               url:
-                $map: 'params.id?`/api/kong/plugins/${params.id}`:'''''
+                $map: |
+                  params.id?`/api/kong/plugins/${params.id}`:''
             schema:
               url:
-                $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+                $map: |
+                  `/api/kong/plugins/schema/${params.pluginName}`
           props:
             dataRoot: config
-            successUrl:
-              $map: '`/kong/plugins`'
+            successUrl: /kong/plugins
             submitTo:
               method:
                 $map: 'params.id?"PUT":"POST"'
-              url:
-                $map: '`/api/kong/plugins`'
+              url: /api/kong/plugins
             mapper:
               $mapper:
                 name: params.pluginName
