@@ -32,6 +32,6 @@ props:
       link: /kong/api/${apiName}/plugin/${name}/${id}
       btnStyle: primary
     - caption: Delete
-      delete: /api/kong/apis/${name}/plugins/${id}
+      delete: /api/kong/apis/${apiName}/plugins/${id}
       message: 'Are you sure you want to delete "${name}"?'
 path: '/kong/api/:name/plugins'

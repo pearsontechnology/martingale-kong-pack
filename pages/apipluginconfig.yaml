@@ -16,20 +16,13 @@ props:
   submitTo:
     method:
       $map: 'params.id?"PUT":"POST"'
-    url: /api/kong/plugins
+    url:
+      $mapper: |
+        `/api/kong/apis/${params.apiName}/plugins`
+    mapper:
+      $mapper: |
+        Object.assign({name: params.pluginName}, props)
   dataRoot: config
-  __mapper:
-    $mapper: |
-      (()=>{
-        console.log(props);
-        return props;
-        return {
-          data: props.data,
-          schema: props.schema,
-          successUrl: props.successUrl,
-          submitTo: props.submitTo
-        };
-      })();
   Editor:
     $component: KongForm
 paths:

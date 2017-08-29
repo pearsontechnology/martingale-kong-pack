@@ -1,46 +1,35 @@
 description: Provides the ability to edit the settings for a configured HMAC on a specific consumer.
-$type: div
+$type: DataEditPage
 children:
-  $type: HeaderPage
-  props:
-    title:
-      $map: >-
-        params.name?`${params.id} - HMAC Auth - ${params.name}`:`${params.id} -
-        HMAC Auth`
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url:
-                $map: >-
-                  params.name?`/api/kong/consumers/${params.id}/hmac-auth/${params.name}`:''
-              mapper:
-                $mapper: >-
-                  {username: props.username, id: props.id, consumer_id:
-                  props.consumer_id, created_at: props.created_at}
-          props:
-            schema:
-              fields:
-                username:
-                  type: string
-                  required: true
-                secret:
-                  type: string
-                  required: true
-            successUrl:
-              $map: '`/kong/consumers/${params.id}/hmac-auth-accounts`'
-            submitTo:
-              method:
-                $map: 'params.name?"PUT":"POST"'
-              url:
-                $map: '`/api/kong/consumers/${params.id}/hmac-auth`'
-          Component:
-            $component: KongForm
+props:
+  title:
+    $map: >-
+      params.name?`${params.id} - HMAC Auth - ${params.name}`:`${params.id} -
+      HMAC Auth`
+  url:
+    $map: >-
+      params.name?`/api/kong/consumers/${params.id}/hmac-auth/${params.name}`:''
+  mapper:
+    $mapper: >-
+      {username: props.username, id: props.id, consumer_id:
+      props.consumer_id, created_at: props.created_at}
+  schema:
+    fields:
+      username:
+        type: string
+        required: true
+      secret:
+        type: string
+        required: true
+  successUrl:
+    $map: '`/kong/consumers/${params.id}/hmac-auth-accounts`'
+  submitTo:
+    method:
+      $map: 'params.name?"PUT":"POST"'
+    url:
+      $map: '`/api/kong/consumers/${params.id}/hmac-auth`'
+  Editor:
+    $component: KongForm
 paths:
   - '/kong/consumer/:id/hmac-auth/:name'
   - '/kong/consumer/:id/hmac-auth'

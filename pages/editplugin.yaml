@@ -1,35 +1,28 @@
 description: Provides the ability to create or edit an existing configured plugin for either an endpoint or globally.
-$type: div
-children:
-  $type: HeaderPage
-  props:
-    title:
-      $map: '`${params.pluginName} Settings`'
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url:
-                $map: |
-                  params.id?`/api/kong/plugins/${params.id}`:''
-            schema:
-              url:
-                $map: |
-                  `/api/kong/plugins/schema/${params.pluginName}`
-          props:
-            dataRoot: config
-            successUrl: /kong/plugins
-            submitTo:
-              method:
-                $map: 'params.id?"PUT":"POST"'
-              url: /api/kong/plugins
-          Component:
-            $component: KongForm
+$type: DataEditPage
+props:
+  title:
+    $map: '`${params.pluginName} Settings`'
+  source:
+    data:
+      url:
+        $map: |
+          params.id?`/api/kong/plugins/${params.id}`:''
+    schema:
+      url:
+        $map: |
+          `/api/kong/plugins/schema/${params.pluginName}`
+  dataRoot: config
+  successUrl: /kong/plugins
+  submitTo:
+    method:
+      $map: 'params.id?"PUT":"POST"'
+    url: /api/kong/plugins
+    mapper:
+      $mapper: |
+        Object.assign({name: params.pluginName}, props)
+  Editor:
+    $component: KongForm
 paths:
   - '/kong/plugin/:pluginName/:id'
   - '/kong/plugin/:pluginName'

@@ -1,45 +1,34 @@
 description: Lists all OAuth 2's associated with a configured consumer.
-$type: HeaderPage
+$type: DataViewPage
 props:
   title:
     $map: '`${params.consumer} - OAuth2 Accounts`'
-children:
-  $type: Panel
-  props:
-    footer:
-      $type: Link
-      props:
-        caption: New
-        className: btn btn-primary
-        to:
-          $mapper: '`/kong/consumer/${params.consumer}/oauth2`'
-  children:
-    $type: Provider
+  url:
+    $map: '`/api/kong/consumers/${params.consumer}/oauth2`'
+  root: data
+  mapper:
+    $mapper: |-
+      props.map((ds)=>{
+        return {
+          name: ds.name,
+          created: new Date(ds.created_at),
+          id: ds.id,
+          consumer_id: ds.consumer_id
+        };
+      })
+  actions:
+    - link:
+        $mapper: '`/kong/consumer/${params.consumer}/oauth2/${props.id}`'
+      caption: Edit
+      btnStyle: primary
+    - caption: Delete
+      delete: '/api/kong/consumers/${consumer_id}/oauth2/${id}'
+      message: 'Are you sure you want to delete "${name||custom_id}"?'
+  footer:
+    $type: Link
     props:
-      provide:
-        data:
-          url:
-            $map: '`/api/kong/consumers/${params.consumer}/oauth2`'
-          root: data
-          mapper:
-            $mapper: |-
-              props.map((ds)=>{
-                return {
-                  name: ds.name,
-                  created: new Date(ds.created_at),
-                  id: ds.id,
-                  consumer_id: ds.consumer_id
-                };
-              })
-      Component:
-        $component: ActionTable
-      props:
-        actions:
-          - link:
-              $mapper: '`/kong/consumer/${params.consumer}/oauth2/${props.id}`'
-            caption: Edit
-            btnStyle: primary
-          - caption: Delete
-            delete: '/api/kong/consumers/${consumer_id}/oauth2/${id}'
-            message: 'Are you sure you want to delete "${name||custom_id}"?'
+      caption: New
+      className: btn btn-primary
+      to:
+        $mapper: '`/kong/consumer/${params.consumer}/oauth2`'
 path: '/kong/consumers/:consumer/oauth2-accounts'
