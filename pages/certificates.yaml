@@ -1,33 +1,22 @@
 description: Provides a listing of available certificates.
-$type: HeaderPage
+$type: DataViewPage
 props:
   title: Kong Certificates
-children:
-  $type: Panel
-  props:
-    footer:
-      $type: Link
-      props:
-        caption: New
-        className: btn btn-primary
-        to: /kong/certificate
-  children:
-    $type: Provider
+  url: /api/kong/certificates
+  root: data
+  actions:
+    - caption: Edit
+      btnStyle: primary
+      link: '/kong/certificate/${id}'
+    - caption: Delete
+      delete: '/api/kong/certificates/${id}'
+      message: 'Are you sure you want to delete "${cert}"?'
+  footer:
+    $type: Link
     props:
-      provide:
-        data:
-          url: /api/kong/certificates
-          root: data
-      Component:
-        $component: ActionTable
-      props:
-        actions:
-          - caption: Edit
-            btnStyle: primary
-            link: '/kong/certificate/${id}'
-          - caption: Delete
-            delete: '/api/kong/certificates/${id}'
-            message: 'Are you sure you want to delete "${cert}"?'
+      caption: New
+      className: btn btn-primary
+      to: /kong/certificate
 path: /kong/certificates
 icon: Certificate
 sideNav: true

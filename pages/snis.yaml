@@ -1,33 +1,22 @@
 description: provides a listing of all configured SNI's.
-$type: HeaderPage
+$type: DataViewPage
 props:
   title: Kong SNI
-children:
-  $type: Panel
-  props:
-    footer:
-      $type: Link
-      props:
-        caption: New
-        className: btn btn-primary
-        to: /kong/sni
-  children:
-    $type: Provider
+  url: /api/kong/snis
+  root: data
+  actions:
+    - caption: Edit
+      btnStyle: primary
+      link: '/kong/sni/${name}'
+    - caption: Delete
+      delete: '/api/kong/snis/${name}'
+      message: 'Are you sure you want to delete "${name}"?'
+  footer:
+    $type: Link
     props:
-      provide:
-        data:
-          url: /api/kong/snis
-          root: data
-      Component:
-        $component: ActionTable
-      props:
-        actions:
-          - caption: Edit
-            btnStyle: primary
-            link: '/kong/sni/${name}'
-          - caption: Delete
-            delete: '/api/kong/snis/${name}'
-            message: 'Are you sure you want to delete "${name}"?'
+      caption: New
+      className: btn btn-primary
+      to: /kong/sni
 path: /kong/snis
 icon: SNI
 sideNav: true

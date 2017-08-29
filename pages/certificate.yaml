@@ -1,40 +1,40 @@
 description: Provides the ability to edit the settings for a configured certificate.
-$type: div
+$type: DataEditPage
 children:
-  $type: HeaderPage
-  props:
-    title: Certificate
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url:
-                $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
-          props:
-            schema:
-              fields:
-                cert:
-                  type: string
-                  required: true
-                  multiline: true
-                key:
-                  type: string
-                  required: true
-                  multiline: true
-#                snis:
-#                  type: array
-            successUrl: /kong/certificates
-            submitTo:
-              method:
-                $map: 'params.id?"PUT":"POST"'
-              url: /api/kong/certificates
-          Component:
-            $component: KongForm
+props:
+  title: Certificate
+  url:
+    $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
+  schema:
+    fields:
+      cert:
+        type: string
+        required: true
+        multiline: true
+      key:
+        type: string
+        required: true
+        multiline: true
+  successUrl: /kong/certificates
+  submitTo:
+    method:
+      $map: 'params.id?"PUT":"POST"'
+    url: /api/kong/certificates
+    mapper:
+      $mapper: |
+        props.id?
+          {
+            id: props.id,
+            created_at: props.created_at,
+            cert: props.cert,
+            key: props.key
+          }:
+          {
+            cert: props.cert,
+            key: props.key
+          }
+  Editor:
+    $component: KongForm
 paths:
   - '/kong/certificate/:id'
   - /kong/certificate

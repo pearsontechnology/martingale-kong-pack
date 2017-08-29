@@ -1,59 +1,46 @@
 description: Provides the ability to edit the configuration for a given SNI.
-$type: div
-children:
-  $type: HeaderPage
-  props:
-    title: Certificate
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          mapper:
-            $mapper: |
-              (()=>{
-                const {
-                  certs
-                } = props || {};
-                if(Array.isArray(certs)){
-                  const schema = {
-                    type: 'object',
-                    required: ['name'],
-                    properties: {
-                      name: {
-                        type: 'string',
-                        title: 'Name'
-                        },
-                        ssl_certificate_id: {
-                          type: 'string',
-                          title: 'Certificate',
-                          enum: certs.map(p=>p.id),
-                          enumNames: certs.map(p=>p.cert)
-                          },
-                      }
-                  };
-                  console.log('schema: ', schema)
-                  return Object.assign({}, props, {schema});
-                }
-                return props;
-              })();
-          provide:
-            certs:
-              url: /api/kong/certificates
-              root: data
-            data:
-              url:
-                $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
-          props:
-            successUrl: /kong/snis
-            submitTo:
-              method:
-                $map: 'params.name?"PUT":"POST"'
-              url: /api/kong/snis
-          Component:
-            $component: Form
+$type: DataEditPage
+props:
+  title: SNI
+  mapper:
+    $mapper: |
+      (()=>{
+        const {
+          certs
+        } = props || {};
+        if(Array.isArray(certs)){
+          const schema = {
+            type: 'object',
+            required: ['name'],
+            properties: {
+              name: {
+                type: 'string',
+                title: 'Name'
+                },
+              ssl_certificate_id: {
+                type: 'string',
+                title: 'Certificate',
+                enum: certs.map(p=>p.id),
+                enumNames: certs.map(p=>p.cert)
+                },
+              }
+          };
+          return Object.assign({}, props, {schema});
+        }
+        return props;
+      })();
+  source:
+    certs:
+      url: /api/kong/certificates
+      root: data
+    data:
+      url:
+        $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
+  successUrl: /kong/snis
+  submitTo:
+    method:
+      $map: params.name?"PUT":"POST"
+    url: /api/kong/snis
 paths:
   - '/kong/sni/:name'
   - /kong/sni

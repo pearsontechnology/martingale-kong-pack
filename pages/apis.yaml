@@ -1,43 +1,36 @@
 description: Provides a listing of configured API's.
-$type: div
-children:
-  $type: HeaderPage
-  props:
-    title: APIs
-  children:
-    - $type: Panel
-      props:
-        footer:
-          $type: Link
-          props:
-            caption: New
-            className: btn btn-primary
-            to: /kong/api
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url: /api/kong/apis
-              root: data
-          Component:
-            $component: ActionTable
-          props:
-            mapper:
-              $mapper:
-                Name: props.name
-                Host's: '(props.hosts || []).join(",")'
-                Upstream URL: props.upstream_url
-                URI's: '(props.uris || []).join(",")'
-            actions:
-              - caption: Settings
-                btnStyle: primary
-                link: '/kong/api/${name}'
-              - caption: Plugins
-                link: '/kong/api/${name}/plugins'
-              - caption: Delete
-                delete: '/api/kong/apis/${name}'
-                message: 'Are you sure you want to delete "${name}"?'
+$type: DataViewPage
+props:
+  title: APIs
+  url: /api/kong/apis
+  root: data
+  columns:
+    - name
+    - hosts
+    - uris
+    - upstream_url
+  mapper:
+    $mapper: |
+      props.map((row)=>{
+        row.hosts = (row.hosts||[]).join(', ');
+        row.uris = (row.uris||[]).join(', ');
+        return row;
+      });
+  actions:
+    - caption: Settings
+      btnStyle: primary
+      link: '/kong/api/${name}'
+    - caption: Plugins
+      link: '/kong/api/${name}/plugins'
+    - caption: Delete
+      delete: '/api/kong/apis/${name}'
+      message: 'Are you sure you want to delete "${name}"?'
+  footer:
+    $type: Link
+    props:
+      caption: New
+      className: btn btn-primary
+      to: /kong/api
 path: /kong/apis
 icon: API
 sideNav: true

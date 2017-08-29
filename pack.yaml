@@ -5,6 +5,20 @@ description: |
   **Required Endpoints:**
 
   /api/kong should point to the admin port of the Kong instance (EG: http://kong:8001)
+
+  or
+
+  /api[/:env]/kong should point to the admin port of the Kong instance (EG: http://kong:8001)
+
+  Where :env is an optional value to route to different instances.
+config:
+  env:
+    type: string
+    description: Environment name for the instance of the plugin.
+  host:
+    type: string
+    description: Hostname or host path to the instance of the Kong API.
+    default: /api/kubernetes
 pages:
   KongDashboard:
     $ref: pages/kongdashboard.yaml

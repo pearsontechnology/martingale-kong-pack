@@ -9,6 +9,24 @@ description: >
 
   /api/kong should point to the admin port of the Kong instance (EG:
   http://kong:8001)
+
+
+  or
+
+
+  /api[/:env]/kong should point to the admin port of the Kong instance (EG:
+  http://kong:8001)
+
+
+  Where :env is an optional value to route to different instances.
+config:
+  env:
+    type: string
+    description: Environment name for the instance of the plugin.
+  host:
+    type: string
+    description: Hostname or host path to the instance of the Kong API.
+    default: /api/kubernetes
 pages:
   KongDashboard:
     description: Provides a basic dashboard view of the associated Kong API Gateway.
@@ -158,70 +176,68 @@ pages:
       height: 256
   PluginsListing:
     description: Provides a listing of all configured plugins.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title: Plugins
-      children:
-        $type: Panel
-        props:
-          footer:
-            $type: Link
-            props:
-              caption: New
-              className: btn btn-primary
-              to:
-                $map: '`/kong/plugin`'
-        children:
-          $type: Provider
-          props:
-            mapper:
-              $mapper: |
-                (()=>{
-                  const {
-                    apis,
-                    data
-                  } = props || {};
-                  if(Array.isArray(apis) && Array.isArray(data)){
-                    const newData = data.map((row)=>{
-                      if(row.api_id){
-                        const api = apis.find((api)=>api.id === row.api_id);
-                        if(api){
-                          return Object.assign({api: api.name||row.api_id}, row);
-                        }
-                      }
-                      return row;
-                    });
-                    return Object.assign({}, props, {data: newData});
+    $type: DataViewPage
+    props:
+      title: Plugins
+      provide:
+        apis:
+          url: /api/kong/apis
+          root: data
+        plugins:
+          url: /api/kong/plugins
+          root: data
+      mapper:
+        $mapper: |
+          (()=>{
+            const {
+              apis,
+              plugins
+            } = props || {};
+            if(Array.isArray(apis) && Array.isArray(plugins)){
+              const newData = plugins.map((row)=>{
+                if(row.api_id){
+                  const api = apis.find((api)=>api.id === row.api_id);
+                  if(api){
+                    return Object.assign({api: api.name||row.api_id}, row);
                   }
-                  return props;
-                })();
-            provide:
-              apis:
-                url: /api/kong/apis
-                root: data
-              data:
-                url: /api/kong/plugins
-                root: data
-            Component:
-              $component: ActionTable
-            props:
-              mapper:
-                $mapper:
-                  Name: props.name
-                  API: props.api
-                  Created At: new Date(props.created_at)
-                  Enabled: props.enabled
-              actions:
-                - caption: Edit
-                  link:
-                    $mapper: '`/kong/plugin/${props.name}/${props.id}`'
-                  btnStyle: primary
-                - caption: Delete
-                  delete:
-                    $mapper: '`/api/kong/plugins/${props.id}`'
-                  message: 'Are you sure you want to delete "${name}"?'
+                }
+                return row;
+              });
+              return Object.assign({}, props, {data: newData});
+            }
+            return props;
+          })();
+      footer:
+        $type: Link
+        props:
+          caption: New
+          className: btn btn-primary
+          to:
+            $map: '`/kong/plugin`'
+      suppress:
+        - api_id
+        - id
+        - enabled
+        - config
+      actions:
+        - caption: Edit
+          link: '/kong/plugin/${name}/${id}'
+          btnStyle: primary
+        - caption: Delete
+          delete: '/api/kong/plugins/${id}'
+          message: 'Are you sure you want to delete "${name}"?'
+        - caption: '${enabled?''Disable'':''Enable''}'
+          btnStyle: '${enabled?''warning'':''success''}'
+          title: 'Disable ${name}'
+          message: >-
+            ${enabled?(typeof(api)!=='undefined'?'Are you sure you want to
+            disable plugin "'+name+'" for "'+api+'"?':'Are you sure you want to
+            disable plugin "'+name+'" globally?'):''}
+          fetch:
+            url: '/api/kong/plugins/${id}'
+            method: patch
+            payload:
+              enabled: '${!enabled}'
     icon: Plugin
     sideNav: true
     caption: Plugins
@@ -303,19 +319,19 @@ pages:
               provide:
                 data:
                   url:
-                    $map: 'params.id?`/api/kong/plugins/${params.id}`:'''''
+                    $map: |
+                      params.id?`/api/kong/plugins/${params.id}`:''
                 schema:
                   url:
-                    $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+                    $map: |
+                      `/api/kong/plugins/schema/${params.pluginName}`
               props:
                 dataRoot: config
-                successUrl:
-                  $map: '`/kong/plugins`'
+                successUrl: /kong/plugins
                 submitTo:
                   method:
                     $map: 'params.id?"PUT":"POST"'
-                  url:
-                    $map: '`/api/kong/plugins`'
+                  url: /api/kong/plugins
                 mapper:
                   $mapper:
                     name: params.pluginName
@@ -327,113 +343,90 @@ pages:
       - '/kong/plugin/:pluginName'
   Cluster:
     description: Provides an overview of the current cluster.
-    $type: HeaderPage
+    $type: DataViewPage
     props:
       title: Kong Cluster
-    children:
-      $type: Panel
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url: /api/kong/cluster
-              root: data
-          Component:
-            $component: Table
+      url: /api/kong/cluster
+      root: data
     path: /kong/cluster
     icon: Cluster
     sideNav: true
     caption: Cluster
   APIs:
     description: Provides a listing of configured API's.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title: APIs
-      children:
-        - $type: Panel
-          props:
-            footer:
-              $type: Link
-              props:
-                caption: New
-                className: btn btn-primary
-                to: /kong/api
-          children:
-            $type: Provider
-            props:
-              provide:
-                data:
-                  url: /api/kong/apis
-                  root: data
-              Component:
-                $component: ActionTable
-              props:
-                mapper:
-                  $mapper:
-                    Name: props.name
-                    Host's: '(props.hosts || []).join(",")'
-                    Upstream URL: props.upstream_url
-                    URI's: '(props.uris || []).join(",")'
-                actions:
-                  - caption: Settings
-                    btnStyle: primary
-                    link: '/kong/api/${name}'
-                  - caption: Plugins
-                    link: '/kong/api/${name}/plugins'
-                  - caption: Delete
-                    delete: '/api/kong/apis/${name}'
-                    message: 'Are you sure you want to delete "${name}"?'
+    $type: DataViewPage
+    props:
+      title: APIs
+      url: /api/kong/apis
+      root: data
+      columns:
+        - name
+        - hosts
+        - uris
+        - upstream_url
+      mapper:
+        $mapper: |
+          props.map((row)=>{
+            row.hosts = (row.hosts||[]).join(', ');
+            row.uris = (row.uris||[]).join(', ');
+            return row;
+          });
+      actions:
+        - caption: Settings
+          btnStyle: primary
+          link: '/kong/api/${name}'
+        - caption: Plugins
+          link: '/kong/api/${name}/plugins'
+        - caption: Delete
+          delete: '/api/kong/apis/${name}'
+          message: 'Are you sure you want to delete "${name}"?'
+      footer:
+        $type: Link
+        props:
+          caption: New
+          className: btn btn-primary
+          to: /kong/api
     path: /kong/apis
     icon: API
     sideNav: true
     caption: APIs
   APIPlugins:
     description: Provides a manageable listing of plugins configured on an API.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title:
-          $map: '`${params.name} Plugin''s`'
-      children:
-        $type: Panel
+    $type: DataViewPage
+    props:
+      title:
+        $map: '`${params.name} Plugin''s`'
+      footer:
+        $type: Link
         props:
-          footer:
-            $type: Link
-            props:
-              caption: New
-              className: btn btn-primary
-              to:
-                $map: '`/kong/api/${params.name}/plugin`'
-        children:
-          $type: Provider
-          props:
-            provide:
-              data:
-                url:
-                  $map: '`/api/kong/apis/${params.name}/plugins`'
-                root: data
-            Component:
-              $component: ActionTable
-            props:
-              mapper:
-                $mapper:
-                  Name: props.name
-                  Created At: new Date(props.created_at)
-                  Enabled: props.enabled
-              actions:
-                - caption: Edit
-                  link:
-                    $mapper: >-
-                      `/kong/api/${params.name}/plugin/${props.name}/${props.id}`
-                  btnStyle: primary
-                - caption: Delete
-                  delete:
-                    $mapper: '`/api/kong/apis/${params.name}/plugins/${props.id}`'
-                  message: 'Are you sure you want to delete "${name}"?'
+          caption: New
+          className: btn btn-primary
+          to:
+            $map: '`/kong/api/${params.name}/plugin`'
+      url:
+        $map: '`/api/kong/apis/${params.name}/plugins`'
+      root: data
+      mapper:
+        $mapper: |
+          props.map((plugin)=>{
+            return {
+              id: plugin.id,
+              apiName: params.name,
+              name: plugin.name,
+              created_at: new Date(plugin.created_at),
+              enabled: plugin.enabled
+            };
+          });
+      suppress:
+        - id
+        - apiName
+      actions:
+        - caption: Edit
+          link: '/kong/api/${apiName}/plugin/${name}/${id}'
+          btnStyle: primary
+        - caption: Delete
+          delete: '/api/kong/apis/${name}/plugins/${id}'
+          message: 'Are you sure you want to delete "${name}"?'
     path: '/kong/api/:name/plugins'
   APISettings:
     description: Provides the ability to edit the settings for a configured API.
@@ -511,119 +504,95 @@ pages:
       - /kong/api
   APIPluginConfig:
     description: Provides the ability to create or edit a plugin configuration.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title:
-          $map: '`${params.name} Settings`'
-      children:
-        - $type: Panel
-          props:
-            inset: true
-          children:
-            $type: Provider
-            props:
-              provide:
-                data:
-                  url:
-                    $map: >-
-                      params.id?`/api/kong/apis/${params.name}/plugins/${params.id}`:''
-                schema:
-                  url:
-                    $map: '`/api/kong/plugins/schema/${params.pluginName}`'
-              props:
-                dataRoot: config
-                successUrl:
-                  $map: '`/kong/api/${params.name}/plugins`'
-                submitTo:
-                  method:
-                    $map: 'params.id?"PUT":"POST"'
-                  url:
-                    $map: '`/api/kong/apis/${params.name}/plugins`'
-                mapper:
-                  $mapper:
-                    name: params.pluginName
-                    config: props
-              Component:
-                $component: KongForm
+    $type: DataEditPage
+    props:
+      title:
+        $map: '`${params.apiName} - ${params.pluginName} Settings`'
+      source:
+        data:
+          url:
+            $map: 'params.id?`/api/kong/plugins/${params.id}`:'''''
+        schema:
+          url:
+            $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+      successUrl:
+        $map: |
+          `/kong/api/${params.apiName}/plugins`
+      submitTo:
+        method:
+          $map: 'params.id?"PUT":"POST"'
+        url: /api/kong/plugins
+      dataRoot: config
+      __mapper:
+        $mapper: |
+          (()=>{
+            console.log(props);
+            return props;
+            return {
+              data: props.data,
+              schema: props.schema,
+              successUrl: props.successUrl,
+              submitTo: props.submitTo
+            };
+          })();
+      Editor:
+        $component: KongForm
     paths:
-      - '/kong/api/:name/plugin/:pluginName/:id'
-      - '/kong/api/:name/plugin/:pluginName'
+      - '/kong/api/:apiName/plugin/:pluginName/:id'
+      - '/kong/api/:apiName/plugin/:pluginName'
   APISelectNewPlugin:
     description: Provides ability to select an API and Plugin to configure to that API.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title:
-          $map: '`${params.name} - New Plugin`'
-      children:
-        - $type: Panel
-          props:
-            inset: true
-          children:
-            $type: Provider
-            props:
-              provide:
-                schema:
-                  url: /api/kong/plugins/enabled
-                  mapper:
-                    $mapper:
-                      fields:
-                        pluginType:
-                          type: '''string'''
-                          enum: props.enabled_plugins
-                          required: true
-              Component:
-                $component: KongForm
-              props:
-                successUrl:
-                  $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
+    $type: DataEditPage
+    props:
+      title:
+        $map: '`${params.name} - New Plugin`'
+      source:
+        schema:
+          url: /api/kong/plugins/enabled
+          mapper:
+            $mapper:
+              fields:
+                pluginType:
+                  type: '''string'''
+                  enum: props.enabled_plugins
+                  required: true
+      Editor:
+        $component: KongForm
+      successUrl:
+        $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
     path: '/kong/api/:name/plugin'
   Consumers:
     description: Provides a listing of configured consumers.
-    $type: HeaderPage
+    $type: DataViewPage
     props:
       title: Kong Consumers
-    children:
-      $type: Panel
-      props:
-        footer:
-          $type: Link
-          props:
-            caption: New
-            className: btn btn-primary
-            to: /kong/consumer
-      children:
-        $type: Provider
+      url: /api/kong/consumers
+      root: data
+      actions:
+        - caption: Edit
+          btnStyle: primary
+          link: '/kong/consumer/${id}'
+        - caption: Delete
+          delete: '/api/kong/consumers/${id}'
+          message: 'Are you sure you want to delete "${username||custom_id}"?'
+        - caption: Basic Auth
+          link: '/kong/consumers/${username||id}/basic-auth-accounts'
+        - caption: OAuth2
+          link: '/kong/consumers/${username||id}/oauth2-accounts'
+        - caption: HMAC
+          link: '/kong/consumers/${username||id}/hmac-auth-accounts'
+        - caption: Key
+          link: '/kong/consumers/${username||id}/key-auth-accounts'
+        - caption: JWT
+          link: '/kong/consumers/${username||id}/jwt-accounts'
+        - caption: ACL's
+          link: '/kong/consumers/${username||id}/acl-auth-accounts'
+      footer:
+        $type: Link
         props:
-          provide:
-            data:
-              url: /api/kong/consumers
-              root: data
-          Component:
-            $component: ActionTable
-          props:
-            actions:
-              - caption: Edit
-                btnStyle: primary
-                link: '/kong/consumer/${id}'
-              - caption: Delete
-                delete: '/api/kong/consumers/${id}'
-                message: 'Are you sure you want to delete "${username||custom_id}"?'
-              - caption: Basic Auth
-                link: '/kong/consumers/${username||id}/basic-auth-accounts'
-              - caption: OAuth2
-                link: '/kong/consumers/${username||id}/oauth2-accounts'
-              - caption: HMAC
-                link: '/kong/consumers/${username||id}/hmac-auth-accounts'
-              - caption: Key
-                link: '/kong/consumers/${username||id}/key-auth-accounts'
-              - caption: JWT
-                link: '/kong/consumers/${username||id}/jwt-accounts'
-              - caption: ACL's
-                link: '/kong/consumers/${username||id}/acl-auth-accounts'
+          caption: New
+          className: btn btn-primary
+          to: /kong/consumer
     path: /kong/consumers
     icon: Consumer
     sideNav: true
@@ -1227,153 +1196,137 @@ pages:
       - '/kong/consumer/:id/acl-auth'
   Certificates:
     description: Provides a listing of available certificates.
-    $type: HeaderPage
+    $type: DataViewPage
     props:
       title: Kong Certificates
-    children:
-      $type: Panel
-      props:
-        footer:
-          $type: Link
-          props:
-            caption: New
-            className: btn btn-primary
-            to: /kong/certificate
-      children:
-        $type: Provider
+      url: /api/kong/certificates
+      root: data
+      actions:
+        - caption: Edit
+          btnStyle: primary
+          link: '/kong/certificate/${id}'
+        - caption: Delete
+          delete: '/api/kong/certificates/${id}'
+          message: 'Are you sure you want to delete "${cert}"?'
+      footer:
+        $type: Link
         props:
-          provide:
-            data:
-              url: /api/kong/certificates
-              root: data
-          Component:
-            $component: ActionTable
-          props:
-            actions:
-              - caption: Edit
-                btnStyle: primary
-                link: '/kong/certificate/${id}'
-              - caption: Delete
-                delete: '/api/kong/certificates/${id}'
-                message: 'Are you sure you want to delete "${cert}"?'
+          caption: New
+          className: btn btn-primary
+          to: /kong/certificate
     path: /kong/certificates
     icon: Certificate
     sideNav: true
     caption: Certificates
   Certificate:
     description: Provides the ability to edit the settings for a configured certificate.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title: Certificate
-      children:
-        - $type: Panel
-          props:
-            inset: true
-          children:
-            $type: Provider
-            props:
-              provide:
-                data:
-                  url:
-                    $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
-              props:
-                schema:
-                  fields:
-                    cert:
-                      type: string
-                      required: true
-                    key:
-                      type: string
-                      required: true
-                successUrl: /kong/certificates
-                submitTo:
-                  method:
-                    $map: 'params.id?"PUT":"POST"'
-                  url: /api/kong/certificates
-              Component:
-                $component: KongForm
+    $type: DataEditPage
+    children: null
+    props:
+      title: Certificate
+      url:
+        $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
+      schema:
+        fields:
+          cert:
+            type: string
+            required: true
+            multiline: true
+          key:
+            type: string
+            required: true
+            multiline: true
+      successUrl: /kong/certificates
+      submitTo:
+        method:
+          $map: 'params.id?"PUT":"POST"'
+        url: /api/kong/certificates
+        mapper:
+          $mapper: |
+            props.id?
+              {
+                id: props.id,
+                created_at: props.created_at,
+                cert: props.cert,
+                key: props.key
+              }:
+              {
+                cert: props.cert,
+                key: props.key
+              }
+      Editor:
+        $component: KongForm
     paths:
       - '/kong/certificate/:id'
       - /kong/certificate
   SNIs:
     description: provides a listing of all configured SNI's.
-    $type: HeaderPage
+    $type: DataViewPage
     props:
       title: Kong SNI
-    children:
-      $type: Panel
-      props:
-        footer:
-          $type: Link
-          props:
-            caption: New
-            className: btn btn-primary
-            to: /kong/sni
-      children:
-        $type: Provider
+      url: /api/kong/snis
+      root: data
+      actions:
+        - caption: Edit
+          btnStyle: primary
+          link: '/kong/sni/${name}'
+        - caption: Delete
+          delete: '/api/kong/snis/${name}'
+          message: 'Are you sure you want to delete "${name}"?'
+      footer:
+        $type: Link
         props:
-          provide:
-            data:
-              url: /api/kong/snis
-              root: data
-          Component:
-            $component: ActionTable
-          props:
-            actions:
-              - caption: Edit
-                btnStyle: primary
-                link: '/kong/sni/${name}'
-              - caption: Delete
-                delete: '/api/kong/snis/${name}'
-                message: 'Are you sure you want to delete "${name}"?'
+          caption: New
+          className: btn btn-primary
+          to: /kong/sni
     path: /kong/snis
     icon: SNI
     sideNav: true
     caption: SNI
   SNI:
     description: Provides the ability to edit the configuration for a given SNI.
-    $type: div
-    children:
-      $type: HeaderPage
-      props:
-        title: Certificate
-      children:
-        - $type: Panel
-          props:
-            inset: true
-          children:
-            $type: Provider
-            props:
-              provide:
-                data:
-                  url:
-                    $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
-                schema:
-                  url: /api/kong/certificates
-                  mapper:
-                    $mapper:
-                      type: '''object'''
-                      required:
-                        - '''name'''
-                      properties:
-                        name:
-                          type: '''string'''
-                          title: '''Name'''
-                        ssl_certificate_id:
-                          type: '''string'''
-                          title: '''Certificate'''
-                          enum: props.map(p=>p.id)
-                          enumNames: props.map(p=>p.cert)
-              props:
-                successUrl: /kong/snis
-                submitTo:
-                  method:
-                    $map: 'params.name?"PUT":"POST"'
-                  url: /api/kong/snis
-              Component:
-                $component: Form
+    $type: DataEditPage
+    props:
+      title: SNI
+      mapper:
+        $mapper: |
+          (()=>{
+            const {
+              certs
+            } = props || {};
+            if(Array.isArray(certs)){
+              const schema = {
+                type: 'object',
+                required: ['name'],
+                properties: {
+                  name: {
+                    type: 'string',
+                    title: 'Name'
+                    },
+                  ssl_certificate_id: {
+                    type: 'string',
+                    title: 'Certificate',
+                    enum: certs.map(p=>p.id),
+                    enumNames: certs.map(p=>p.cert)
+                    },
+                  }
+              };
+              return Object.assign({}, props, {schema});
+            }
+            return props;
+          })();
+      source:
+        certs:
+          url: /api/kong/certificates
+          root: data
+        data:
+          url:
+            $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
+      successUrl: /kong/snis
+      submitTo:
+        method:
+          $map: 'params.name?"PUT":"POST"'
+        url: /api/kong/snis
     paths:
       - '/kong/sni/:name'
       - /kong/sni

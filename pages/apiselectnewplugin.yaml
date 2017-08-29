@@ -1,30 +1,20 @@
 description: Provides ability to select an API and Plugin to configure to that API.
-$type: div
-children:
-  $type: HeaderPage
-  props:
-    title:
-      $map: '`${params.name} - New Plugin`'
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          provide:
-            schema:
-              url: /api/kong/plugins/enabled
-              mapper:
-                $mapper:
-                  fields:
-                    pluginType:
-                      type: '''string'''
-                      enum: props.enabled_plugins
-                      required: true
-          Component:
-            $component: KongForm
-          props:
-            successUrl:
-              $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
+$type: DataEditPage
+props:
+  title:
+    $map: '`${params.name} - New Plugin`'
+  source:
+    schema:
+      url: /api/kong/plugins/enabled
+      mapper:
+        $mapper:
+          fields:
+            pluginType:
+              type: '''string'''
+              enum: props.enabled_plugins
+              required: true
+  Editor:
+    $component: KongForm
+  successUrl:
+    $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
 path: '/kong/api/:name/plugin'

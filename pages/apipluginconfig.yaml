@@ -1,40 +1,37 @@
 description: Provides the ability to create or edit a plugin configuration.
-$type: div
-children:
-  $type: HeaderPage
-  props:
-    title:
-      $map: '`${params.name} Settings`'
-  children:
-    - $type: Panel
-      props:
-        inset: true
-      children:
-        $type: Provider
-        props:
-          provide:
-            data:
-              url:
-                $map: >-
-                  params.id?`/api/kong/apis/${params.name}/plugins/${params.id}`:''
-            schema:
-              url:
-                $map: '`/api/kong/plugins/schema/${params.pluginName}`'
-          props:
-            dataRoot: config
-            successUrl:
-              $map: '`/kong/api/${params.name}/plugins`'
-            submitTo:
-              method:
-                $map: 'params.id?"PUT":"POST"'
-              url:
-                $map: '`/api/kong/apis/${params.name}/plugins`'
-            mapper:
-              $mapper:
-                name: params.pluginName
-                config: props
-          Component:
-            $component: KongForm
+$type: DataEditPage
+props:
+  title:
+    $map: '`${params.apiName} - ${params.pluginName} Settings`'
+  source:
+    data:
+      url:
+        $map: params.id?`/api/kong/plugins/${params.id}`:''
+    schema:
+      url:
+        $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+  successUrl:
+    $map: |
+      `/kong/api/${params.apiName}/plugins`
+  submitTo:
+    method:
+      $map: 'params.id?"PUT":"POST"'
+    url: /api/kong/plugins
+  dataRoot: config
+  __mapper:
+    $mapper: |
+      (()=>{
+        console.log(props);
+        return props;
+        return {
+          data: props.data,
+          schema: props.schema,
+          successUrl: props.successUrl,
+          submitTo: props.submitTo
+        };
+      })();
+  Editor:
+    $component: KongForm
 paths:
-  - '/kong/api/:name/plugin/:pluginName/:id'
-  - '/kong/api/:name/plugin/:pluginName'
+  - '/kong/api/:apiName/plugin/:pluginName/:id'
+  - '/kong/api/:apiName/plugin/:pluginName'

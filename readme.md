@@ -8,6 +8,20 @@ This pack provides screens that allow users to manage a Kong API Gateway instanc
 
 /api/kong should point to the admin port of the Kong instance (EG: http://kong:8001)
 
+or
+
+/api[/:env]/kong should point to the admin port of the Kong instance (EG: http://kong:8001)
+
+Where :env is an optional value to route to different instances.
+
+
+## Configuration Options
+
+### env: Environment name for the instance of the plugin.
+
+
+### host: Hostname or host path to the instance of the Kong API.
+**Default Value:** /api/kubernetes
 
 ## Included Pages
 ### KongDashboard: Side Nav
@@ -148,9 +162,9 @@ Provides the ability to edit the settings for a configured API.
 
 Provides the ability to create or edit a plugin configuration.
 
-**Path:** /kong/api/:name/plugin/:pluginName/:id
+**Path:** /kong/api/:apiName/plugin/:pluginName/:id
 
-**Path:** /kong/api/:name/plugin/:pluginName
+**Path:** /kong/api/:apiName/plugin/:pluginName
 
 
 ### APISelectNewPlugin: 
