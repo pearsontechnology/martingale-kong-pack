@@ -28,10 +28,6 @@ children:
               method:
                 $map: 'params.id?"PUT":"POST"'
               url: /api/kong/plugins
-            mapper:
-              $mapper:
-                name: params.pluginName
-                config: props
           Component:
             $component: KongForm
 paths:
