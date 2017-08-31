@@ -24,6 +24,8 @@ props:
     - id
     - apiName
     - enabled
+    - baseLink
+    - host
   actions:
     - caption: Edit
       link: ${baseLink}/api/${apiName}/plugin/${name}/${id}
