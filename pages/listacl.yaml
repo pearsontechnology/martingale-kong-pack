@@ -2,9 +2,11 @@ description: Lists all ACL's associated with a configured consumer.
 $type: DataViewPage
 props:
   title:
-    $map: '`${params.consumer} - ACL''s`'
+    $map: |
+      `${params.consumer} - ACL's`
   url:
-    $map: '`/api/kong/consumers/${params.consumer}/acls`'
+    $map: |
+      `${config.host || '/api/kong'}/consumers/${params.consumer}/acls`
   root: data
   mapper:
     $mapper: |-
@@ -18,7 +20,9 @@ props:
       })
   actions:
     - caption: Delete
-      delete: '/api/kong/consumers/${consumer_id}/acls/${id}'
+      delete:
+        $mapper: |
+          `${config.host || '/api/kong'}/consumers/${props.consumer_id}/acls/${props.id}`
       message: 'Are you sure you want to delete "${group||id}"?'
   footer:
     $type: Link
@@ -26,5 +30,8 @@ props:
       caption: New
       className: btn btn-primary
       to:
-        $mapper: '`/kong/consumer/${params.consumer}/acl-auth`'
-path: '/kong/consumers/:consumer/acl-auth-accounts'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/acl-auth`
+paths:
+  - '/kong/consumers/:consumer/acl-auth-accounts'
+  - '/kong/:env/consumers/:consumer/acl-auth-accounts'

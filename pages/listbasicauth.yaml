@@ -2,9 +2,11 @@ description: Lists all Basic Auth's associated with a configured consumer.
 $type: DataViewPage
 props:
   title:
-    $map: '`${params.consumer} - Basic Auth Accounts`'
+    $map: |
+      `${params.consumer} - Basic Auth Accounts`
   url:
-    $map: '`/api/kong/consumers/${params.consumer}/basic-auth`'
+    $map: |
+      `${config.host || '/api/kong'}/consumers/${params.consumer}/basic-auth`
   root: data
   mapper:
     $mapper: |-
@@ -18,11 +20,14 @@ props:
       })
   actions:
     - link:
-        $mapper: '`/kong/consumer/${params.consumer}/basic-auth/${props.username}`'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/basic-auth/${props.username}`
       caption: Edit
       btnStyle: primary
     - caption: Delete
-      delete: '/api/kong/consumers/${consumer_id}/basic-auth/${id}'
+      delete:
+        $mapper: |
+          `${config.host || '/api/kong'}/consumers/${props.consumer_id}/basic-auth/${props.id}`
       message: 'Are you sure you want to delete "${username||custom_id}"?'
   footer:
     $type: Link
@@ -30,5 +35,8 @@ props:
       caption: New
       className: btn btn-primary
       to:
-        $mapper: '`/kong/consumer/${params.consumer}/basic-auth`'
-path: '/kong/consumers/:consumer/basic-auth-accounts'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/basic-auth`
+paths:
+  - '/kong/consumers/:consumer/basic-auth-accounts'
+  - '/kong/:env/consumers/:consumer/basic-auth-accounts'

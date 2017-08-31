@@ -19,7 +19,12 @@ children:
             props:
               provide:
                 data:
-                  url: /api/kong/status
+                  url:
+                    $map: |
+                      (()=>{
+                        console.log(config)
+                        return `${config.host || '/api/kong'}/status`
+                      })()
                   mapper:
                     $mapper: 'props.server?[props.server]:null'
                   refresh: 5000
@@ -42,7 +47,9 @@ children:
             props:
               provide:
                 data:
-                  url: /api/kong/status
+                  url:
+                    $map: |
+                      `${config.host || '/api/kong'}/status`
                   mapper:
                     $mapper: 'props.server?[props.server]:null'
                   refresh: 5000
@@ -63,7 +70,9 @@ children:
             props:
               provide:
                 data:
-                  url: /api/kong
+                  url:
+                    $map: |
+                      config.host || '/api/kong'
                   mapper:
                     $mapper: 'props.timers?[props.timers]:null'
                   refresh: 5000
@@ -73,7 +82,10 @@ children:
                 bars:
                   - running
                   - pending
-path: /kong/
+dynamicPath: config.env?`/kong/${config.env}/`:'/kong/'
+paths:
+  - /kong/
+  - /kong/:env/
 sideNav: true
 caption: Dashboard
 isDashboard: true

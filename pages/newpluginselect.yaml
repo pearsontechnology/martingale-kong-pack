@@ -31,14 +31,26 @@ props:
       })();
   source:
     apis:
-      url: /api/kong/apis
+      url:
+        $map: |
+          `${config.host || "/api/kong"}/apis`
       root: data
     plugins:
-      url: /api/kong/plugins/enabled
+      url:
+        $map: |
+          `${config.host || "/api/kong"}/plugins/enabled`
       root: enabled_plugins
   Editor:
     $component: KongForm
   successUrl:
     $mapper: |
-      props.api!=='[global]'?`/kong/api/${props.api}/plugin/${props.pluginType}`:`/kong/plugin/${props.pluginType}`
-path: /kong/plugin
+      (()=>{
+        const rootPath = config.env?`/kong/${config.env}`:'/kong';
+        if(props.api!=='[global]'){
+          return `${rootPath}/api/${props.api}/plugin/${props.pluginType}`;
+        }
+        return `${rootPath}/plugin/${props.pluginType}`
+      })();
+paths:
+  - /kong/plugin
+  - /kong/:env/plugin

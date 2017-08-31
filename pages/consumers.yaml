@@ -2,34 +2,52 @@ description: Provides a listing of configured consumers.
 $type: DataViewPage
 props:
   title: Kong Consumers
-  url: /api/kong/consumers
+  url:
+    $map: |
+      `${config.host || '/api/kong'}/consumers`
   root: data
+  mapper:
+    $mapper: |
+      props.map(row=>{
+        return Object.assign({
+          baseLink:  config.env?`/kong/${config.env}`:'/kong',
+          host: config.host || '/api/kong'
+        }, row);
+      });
+  suppress:
+    - baseLink
+    - host
   actions:
     - caption: Edit
       btnStyle: primary
-      link: '/kong/consumer/${id}'
+      link: '${baseLink}/consumer/${id}'
     - caption: Delete
-      delete: '/api/kong/consumers/${id}'
+      delete: '${host}/consumers/${id}'
       message: 'Are you sure you want to delete "${username||custom_id}"?'
     - caption: Basic Auth
-      link: '/kong/consumers/${username||id}/basic-auth-accounts'
+      link: '${baseLink}/consumers/${username||id}/basic-auth-accounts'
     - caption: OAuth2
-      link: '/kong/consumers/${username||id}/oauth2-accounts'
+      link: '${baseLink}/consumers/${username||id}/oauth2-accounts'
     - caption: HMAC
-      link: '/kong/consumers/${username||id}/hmac-auth-accounts'
+      link: '${baseLink}/consumers/${username||id}/hmac-auth-accounts'
     - caption: Key
-      link: '/kong/consumers/${username||id}/key-auth-accounts'
+      link: '${baseLink}/consumers/${username||id}/key-auth-accounts'
     - caption: JWT
-      link: '/kong/consumers/${username||id}/jwt-accounts'
+      link: '${baseLink}/consumers/${username||id}/jwt-accounts'
     - caption: ACL's
-      link: '/kong/consumers/${username||id}/acl-auth-accounts'
+      link: '${baseLink}/consumers/${username||id}/acl-auth-accounts'
   footer:
     $type: Link
     props:
       caption: New
       className: btn btn-primary
-      to: /kong/consumer
-path: /kong/consumers
+      to:
+        $map: |
+          config.env?`/kong/${config.env}/consumer`:'/kong/consumer'
+dynamicPath: config.env?`/kong/${config.env}/consumers`:'/kong/consumers'
+paths:
+  - /kong/consumers
+  - /kong/:env/consumers
 icon: Consumer
 sideNav: true
 caption: Consumers

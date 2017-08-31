@@ -4,7 +4,8 @@ props:
   title:
     $map: '`${params.name} Settings`'
   url:
-    $map: 'params.name?`/api/kong/apis/${params.name}`:'''''
+    $map: |
+      params.name?`${config.host || "/api/kong/"}/apis/${params.name}`:''
   schema:
     fields:
       name:
@@ -49,13 +50,18 @@ props:
         type: number
         default: 60000
         required: true
-  successUrl: /kong/apis
+  successUrl:
+    $mapper: config.env?`/kong/${config.env}/apis`:`/kong/apis`
   submitTo:
     method:
       $map: 'params.name?"PUT":"POST"'
-    url: /api/kong/apis
+    url:
+      $map: |
+        `${config.host || '/api/kong'}/apis`
   Editor:
     $component: KongForm
 paths:
   - '/kong/api/:name'
   - /kong/api
+  - '/kong/:env/api/:name'
+  - /kong/:env/api

@@ -2,10 +2,11 @@ description: Provides the ability to edit the settings for a configured ACL on a
 $type: DataEditPage
 props:
   title:
-    $map: 'params.name?`${params.id} - ACL''s`:`${params.id} - ACL''s`'
+    $map: |
+      params.name?`${params.id} - ACL's`:`${params.id} - ACL's`
   url:
     $map: >-
-      params.name?`/api/kong/consumers/${params.id}/acls/${params.name}`:''
+      params.name?`${config.host || '/api/kong'}/consumers/${params.id}/acls/${params.name}`:''
   mapper:
     $mapper: >-
       {group: props.group, id: props.id, consumer_id:
@@ -15,14 +16,18 @@ props:
       group:
         type: string
   successUrl:
-    $map: '`/kong/consumers/${params.id}/acl-auth-accounts`'
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/acl-auth-accounts`
   submitTo:
     method:
       $map: 'params.name?"PUT":"POST"'
     url:
-      $map: '`/api/kong/consumers/${params.id}/acls`'
+      $map: |
+        `${config.host || '/api/kong'}/consumers/${params.id}/acls`
   Editor:
     $component: KongForm
 paths:
   - '/kong/consumer/:id/acl-auth/:name'
   - '/kong/consumer/:id/acl-auth'
+  - '/kong/:env/consumer/:id/acl-auth/:name'
+  - '/kong/:env/consumer/:id/acl-auth'

@@ -2,11 +2,11 @@ description: Provides the ability to edit the settings for a configured JWT on a
 $type: DataEditPage
 props:
   title:
-    $map: >-
+    $map: |
       params.name?`${params.id} - JWT Auth - ${params.name}`:`${params.id} - JWT Auth`
   url:
-    $map: >-
-      params.name?`/api/kong/consumers/${params.id}/jwt/${params.name}`:''
+    $map: |
+      params.name?`${config.host || '/api/kong'}/consumers/${params.id}/jwt/${params.name}`:''
   mapper:
     $mapper: >-
       {key: props.key, id: props.id, consumer_id: props.consumer_id,
@@ -20,14 +20,18 @@ props:
         type: string
         required: true
   successUrl:
-    $map: '`/kong/consumers/${params.id}/jwt-accounts`'
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/jwt-accounts`
   submitTo:
     method:
       $map: 'params.name?"PUT":"POST"'
     url:
-      $map: '`/api/kong/consumers/${params.id}/jwt`'
+      $map: |
+        `${config.host || '/api/kong'}/consumers/${params.id}/jwt`
   Editor:
     $component: KongForm
 paths:
   - '/kong/consumer/:id/jwt/:name'
   - '/kong/consumer/:id/jwt'
+  - '/kong/:env/consumer/:id/jwt/:name'
+  - '/kong/:env/consumer/:id/jwt'

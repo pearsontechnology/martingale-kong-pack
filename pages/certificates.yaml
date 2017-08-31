@@ -2,22 +2,33 @@ description: Provides a listing of available certificates.
 $type: DataViewPage
 props:
   title: Kong Certificates
-  url: /api/kong/certificates
+  url:
+    $map: |
+      `${config.host || '/api/kong'}/certificates`
   root: data
   actions:
     - caption: Edit
       btnStyle: primary
-      link: '/kong/certificate/${id}'
+      link:
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/certificate/${props.id}`
     - caption: Delete
-      delete: '/api/kong/certificates/${id}'
+      delete:
+        $mapper: |
+          `${config.host || '/api/kong'}/certificates/${props.id}`
       message: 'Are you sure you want to delete "${cert}"?'
   footer:
     $type: Link
     props:
       caption: New
       className: btn btn-primary
-      to: /kong/certificate
-path: /kong/certificates
+      to:
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/certificate`
+dynamicPath: config.env?`/kong/${config.env}/certificates`:'/kong/certificates'
+paths:
+  - /kong/certificates
+  - /kong/:env/certificates
 icon: Certificate
 sideNav: true
 caption: Certificates

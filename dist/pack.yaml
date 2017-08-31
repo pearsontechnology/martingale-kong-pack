@@ -23,10 +23,11 @@ config:
   env:
     type: string
     description: Environment name for the instance of the plugin.
+    default: default
   host:
     type: string
     description: Hostname or host path to the instance of the Kong API.
-    default: /api/kubernetes
+    default: /api/kong
 pages:
   KongDashboard:
     description: Provides a basic dashboard view of the associated Kong API Gateway.
@@ -50,7 +51,12 @@ pages:
                 props:
                   provide:
                     data:
-                      url: /api/kong/status
+                      url:
+                        $map: |
+                          (()=>{
+                            console.log(config)
+                            return `${config.host || '/api/kong'}/status`
+                          })()
                       mapper:
                         $mapper: 'props.server?[props.server]:null'
                       refresh: 5000
@@ -73,7 +79,9 @@ pages:
                 props:
                   provide:
                     data:
-                      url: /api/kong/status
+                      url:
+                        $map: |
+                          `${config.host || '/api/kong'}/status`
                       mapper:
                         $mapper: 'props.server?[props.server]:null'
                       refresh: 5000
@@ -94,7 +102,9 @@ pages:
                 props:
                   provide:
                     data:
-                      url: /api/kong
+                      url:
+                        $map: |
+                          config.host || '/api/kong'
                       mapper:
                         $mapper: 'props.timers?[props.timers]:null'
                       refresh: 5000
@@ -104,7 +114,10 @@ pages:
                     bars:
                       - running
                       - pending
-    path: /kong/
+    dynamicPath: 'config.env?`/kong/${config.env}/`:''/kong/'''
+    paths:
+      - /kong/
+      - '/kong/:env/'
     sideNav: true
     caption: Dashboard
     isDashboard: true
@@ -181,10 +194,14 @@ pages:
       title: Plugins
       provide:
         apis:
-          url: /api/kong/apis
+          url:
+            $map: |
+              `${config.host || "/api/kong"}/apis`
           root: data
         plugins:
-          url: /api/kong/plugins
+          url:
+            $map: |
+              `${config.host || "/api/kong"}/plugins`
           root: data
       mapper:
         $mapper: |
@@ -195,10 +212,15 @@ pages:
             } = props || {};
             if(Array.isArray(apis) && Array.isArray(plugins)){
               const newData = plugins.map((row)=>{
+                row.baseLink = config.env?`/kong/${config.env}`:'/kong';
+                row.host = config.host || '/api/kong';
+
                 if(row.api_id){
                   const api = apis.find((api)=>api.id === row.api_id);
                   if(api){
-                    return Object.assign({api: api.name||row.api_id}, row);
+                    return Object.assign({
+                        api: api.name||row.api_id
+                      }, row);
                   }
                 }
                 return row;
@@ -213,35 +235,42 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $map: '`/kong/plugin`'
+            $map: |
+              (config.env?`/kong/${config.env}`:`/kong`)+`/plugin`
       suppress:
         - api_id
         - id
         - enabled
         - config
+        - baseLink
+        - host
       actions:
         - caption: Edit
-          link: '/kong/plugin/${name}/${id}'
+          link: '${baseLink}/plugin/${name}/${id}'
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/plugins/${id}'
+          delete: '${host}/plugins/${id}'
           message: 'Are you sure you want to delete "${name}"?'
         - caption: '${enabled?''Disable'':''Enable''}'
           btnStyle: '${enabled?''warning'':''success''}'
           title: 'Disable ${name}'
-          message: >-
-            ${enabled?(typeof(api)!=='undefined'?'Are you sure you want to
-            disable plugin "'+name+'" for "'+api+'"?':'Are you sure you want to
-            disable plugin "'+name+'" globally?'):''}
+          message: |
+            ${enabled?(typeof(api)!=='undefined'
+              ?'Are you sure you want to disable plugin "'+name+'" for "'+api+'"?':
+              'Are you sure you want to disable plugin "'+name+'" globally?'):''
+            }
           fetch:
-            url: '/api/kong/plugins/${id}'
+            url: '${host}/plugins/${id}'
             method: patch
             payload:
               enabled: '${!enabled}'
     icon: Plugin
     sideNav: true
     caption: Plugins
-    path: /kong/plugins
+    dynamicPath: 'config.env?`/kong/${config.env}/plugins`:''/kong/plugins'''
+    paths:
+      - /kong/plugins
+      - '/kong/:env/plugins'
   NewPluginSelect:
     description: >-
       Provides the ability to select a plugin and an optional API to bind it to
@@ -278,17 +307,29 @@ pages:
           })();
       source:
         apis:
-          url: /api/kong/apis
+          url:
+            $map: |
+              `${config.host || "/api/kong"}/apis`
           root: data
         plugins:
-          url: /api/kong/plugins/enabled
+          url:
+            $map: |
+              `${config.host || "/api/kong"}/plugins/enabled`
           root: enabled_plugins
       Editor:
         $component: KongForm
       successUrl:
-        $mapper: >
-          props.api!=='[global]'?`/kong/api/${props.api}/plugin/${props.pluginType}`:`/kong/plugin/${props.pluginType}`
-    path: /kong/plugin
+        $mapper: |
+          (()=>{
+            const rootPath = config.env?`/kong/${config.env}`:'/kong';
+            if(props.api!=='[global]'){
+              return `${rootPath}/api/${props.api}/plugin/${props.pluginType}`;
+            }
+            return `${rootPath}/plugin/${props.pluginType}`
+          })();
+    paths:
+      - /kong/plugin
+      - '/kong/:env/plugin'
   EditPlugin:
     description: >-
       Provides the ability to create or edit an existing configured plugin for
@@ -301,17 +342,22 @@ pages:
         data:
           url:
             $map: |
-              params.id?`/api/kong/plugins/${params.id}`:''
+              params.id?`${config.host || "/api/kong"}/plugins/${params.id}`:''
         schema:
           url:
-            $map: |
-              `/api/kong/plugins/schema/${params.pluginName}`
+            $map: >
+              `${config.host ||
+              "/api/kong"}/plugins/schema/${params.pluginName}`
       dataRoot: config
-      successUrl: /kong/plugins
+      successUrl:
+        $map: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/plugins`
       submitTo:
         method:
           $map: 'params.id?"PUT":"POST"'
-        url: /api/kong/plugins
+        url:
+          $mapper: |
+            `${config.host || "/api/kong"}/plugins`
         mapper:
           $mapper: |
             Object.assign({name: params.pluginName}, props)
@@ -320,14 +366,21 @@ pages:
     paths:
       - '/kong/plugin/:pluginName/:id'
       - '/kong/plugin/:pluginName'
+      - '/kong/:env/plugin/:pluginName/:id'
+      - '/kong/:env/plugin/:pluginName'
   Cluster:
     description: Provides an overview of the current cluster.
     $type: DataViewPage
     props:
       title: Kong Cluster
-      url: /api/kong/cluster
+      url:
+        $map: |
+          `${config.host || '/api/kong'}/cluster`
       root: data
-    path: /kong/cluster
+    dynamicPath: 'config.env?`/kong/${config.env}/cluster`:''/kong/cluster'''
+    paths:
+      - /kong/cluster
+      - '/kong/:env/cluster'
     icon: Cluster
     sideNav: true
     caption: Cluster
@@ -336,7 +389,9 @@ pages:
     $type: DataViewPage
     props:
       title: APIs
-      url: /api/kong/apis
+      url:
+        $map: |
+          `${config.host || "/api/kong/"}/apis`
       root: data
       columns:
         - name
@@ -346,26 +401,33 @@ pages:
       mapper:
         $mapper: |
           props.map((row)=>{
+            row.baseLink =  config.env?`/kong/${config.env}`:'/kong';
+            row.host = config.host || '/api/kong';
             row.hosts = (row.hosts||[]).join(', ');
-            row.uris = (row.uris||[]).join(', ');
+            row.uris = Array.isArray(row.uris)?row.uris.join(', '):'';
             return row;
           });
       actions:
         - caption: Settings
           btnStyle: primary
-          link: '/kong/api/${name}'
+          link: '${baseLink}/api/${name}'
         - caption: Plugins
-          link: '/kong/api/${name}/plugins'
+          link: '${baseLink}/api/${name}/plugins'
         - caption: Delete
-          delete: '/api/kong/apis/${name}'
+          delete: '${host}/apis/${name}'
           message: 'Are you sure you want to delete "${name}"?'
       footer:
         $type: Link
         props:
           caption: New
           className: btn btn-primary
-          to: /kong/api
-    path: /kong/apis
+          to:
+            $map: |
+              config.env?`/kong/${config.env}/api`:`/kong/api`
+    dynamicPath: 'config.env?`/kong/${config.env}/apis`:''/kong/apis'''
+    paths:
+      - /kong/apis
+      - '/kong/:env/apis'
     icon: API
     sideNav: true
     caption: APIs
@@ -375,20 +437,16 @@ pages:
     props:
       title:
         $map: '`${params.name} Plugin''s`'
-      footer:
-        $type: Link
-        props:
-          caption: New
-          className: btn btn-primary
-          to:
-            $map: '`/kong/api/${params.name}/plugin`'
       url:
-        $map: '`/api/kong/apis/${params.name}/plugins`'
+        $map: |
+          `${config.host || "/api/kong/"}/apis/${params.name}/plugins`
       root: data
       mapper:
         $mapper: |
           props.map((plugin)=>{
             return {
+              baseLink:  config.env?`/kong/${config.env}`:'/kong',
+              host: config.host || '/api/kong',
               id: plugin.id,
               apiName: params.name,
               name: plugin.name,
@@ -399,14 +457,36 @@ pages:
       suppress:
         - id
         - apiName
+        - enabled
       actions:
         - caption: Edit
-          link: '/kong/api/${apiName}/plugin/${name}/${id}'
+          link: '${baseLink}/api/${apiName}/plugin/${name}/${id}'
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/apis/${apiName}/plugins/${id}'
+          delete: '${host}/apis/${apiName}/plugins/${id}'
           message: 'Are you sure you want to delete "${name}"?'
-    path: '/kong/api/:name/plugins'
+        - caption: '${enabled?''Disable'':''Enable''}'
+          btnStyle: '${enabled?''warning'':''success''}'
+          title: 'Disable ${name}'
+          message: >
+            `Are you sure you want to disable plugin "${name}" for
+            "${apiName}"?`
+          fetch:
+            url: '${host}/plugins/${id}'
+            method: patch
+            payload:
+              enabled: '${!enabled}'
+      footer:
+        $type: Link
+        props:
+          caption: New
+          className: btn btn-primary
+          to:
+            $map: >
+              (config.env?`/kong/${config.env}`:`/kong`)+`/api/${params.name}/plugin`
+    paths:
+      - '/kong/api/:name/plugins'
+      - '/kong/:env/api/:name/plugins'
   APISettings:
     description: Provides the ability to edit the settings for a configured API.
     $type: DataEditPage
@@ -414,7 +494,8 @@ pages:
       title:
         $map: '`${params.name} Settings`'
       url:
-        $map: 'params.name?`/api/kong/apis/${params.name}`:'''''
+        $map: |
+          params.name?`${config.host || "/api/kong/"}/apis/${params.name}`:''
       schema:
         fields:
           name:
@@ -459,38 +540,47 @@ pages:
             type: number
             default: 60000
             required: true
-      successUrl: /kong/apis
+      successUrl:
+        $mapper: 'config.env?`/kong/${config.env}/apis`:`/kong/apis`'
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
-        url: /api/kong/apis
+        url:
+          $map: |
+            `${config.host || '/api/kong'}/apis`
       Editor:
         $component: KongForm
     paths:
       - '/kong/api/:name'
       - /kong/api
+      - '/kong/:env/api/:name'
+      - '/kong/:env/api'
   APIPluginConfig:
     description: Provides the ability to create or edit a plugin configuration.
     $type: DataEditPage
     props:
       title:
-        $map: '`${params.apiName} - ${params.pluginName} Settings`'
+        $map: |
+          `${params.apiName} - ${params.pluginName} Settings`
       source:
         data:
           url:
-            $map: 'params.id?`/api/kong/plugins/${params.id}`:'''''
+            $map: |
+              params.id?`${config.host || "/api/kong"}/plugins/${params.id}`:''
         schema:
           url:
-            $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+            $map: >
+              `${config.host ||
+              "/api/kong"}/plugins/schema/${params.pluginName}`
       successUrl:
-        $map: |
-          `/kong/api/${params.apiName}/plugins`
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/api/${params.apiName}/plugins`
       submitTo:
         method:
           $map: 'params.id?"PUT":"POST"'
         url:
           $mapper: |
-            `/api/kong/apis/${params.apiName}/plugins`
+            `${config.host || "/api/kong"}/apis/${params.apiName}/plugins`
         mapper:
           $mapper: |
             Object.assign({name: params.pluginName}, props)
@@ -500,6 +590,8 @@ pages:
     paths:
       - '/kong/api/:apiName/plugin/:pluginName/:id'
       - '/kong/api/:apiName/plugin/:pluginName'
+      - '/kong/:env/api/:apiName/plugin/:pluginName/:id'
+      - '/kong/:env/api/:apiName/plugin/:pluginName'
   APISelectNewPlugin:
     description: Provides ability to select an API and Plugin to configure to that API.
     $type: DataEditPage
@@ -508,7 +600,9 @@ pages:
         $map: '`${params.name} - New Plugin`'
       source:
         schema:
-          url: /api/kong/plugins/enabled
+          url:
+            $map: |
+              `${config.host || "/api/kong"}/plugins/enabled`
           mapper:
             $mapper:
               fields:
@@ -519,41 +613,62 @@ pages:
       Editor:
         $component: KongForm
       successUrl:
-        $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
-    path: '/kong/api/:name/plugin'
+        $mapper: >
+          (config.env?`/kong/${config.env}`:`/kong`)+`/api/${params.name}/plugin/${props.pluginType}`
+    paths:
+      - '/kong/api/:name/plugin'
+      - '/kong/:env/api/:name/plugin'
   Consumers:
     description: Provides a listing of configured consumers.
     $type: DataViewPage
     props:
       title: Kong Consumers
-      url: /api/kong/consumers
+      url:
+        $map: |
+          `${config.host || '/api/kong'}/consumers`
       root: data
+      mapper:
+        $mapper: |
+          props.map(row=>{
+            return Object.assign({
+              baseLink:  config.env?`/kong/${config.env}`:'/kong',
+              host: config.host || '/api/kong'
+            }, row);
+          });
+      suppress:
+        - baseLink
+        - host
       actions:
         - caption: Edit
           btnStyle: primary
-          link: '/kong/consumer/${id}'
+          link: '${baseLink}/consumer/${id}'
         - caption: Delete
-          delete: '/api/kong/consumers/${id}'
+          delete: '${host}/consumers/${id}'
           message: 'Are you sure you want to delete "${username||custom_id}"?'
         - caption: Basic Auth
-          link: '/kong/consumers/${username||id}/basic-auth-accounts'
+          link: '${baseLink}/consumers/${username||id}/basic-auth-accounts'
         - caption: OAuth2
-          link: '/kong/consumers/${username||id}/oauth2-accounts'
+          link: '${baseLink}/consumers/${username||id}/oauth2-accounts'
         - caption: HMAC
-          link: '/kong/consumers/${username||id}/hmac-auth-accounts'
+          link: '${baseLink}/consumers/${username||id}/hmac-auth-accounts'
         - caption: Key
-          link: '/kong/consumers/${username||id}/key-auth-accounts'
+          link: '${baseLink}/consumers/${username||id}/key-auth-accounts'
         - caption: JWT
-          link: '/kong/consumers/${username||id}/jwt-accounts'
+          link: '${baseLink}/consumers/${username||id}/jwt-accounts'
         - caption: ACL's
-          link: '/kong/consumers/${username||id}/acl-auth-accounts'
+          link: '${baseLink}/consumers/${username||id}/acl-auth-accounts'
       footer:
         $type: Link
         props:
           caption: New
           className: btn btn-primary
-          to: /kong/consumer
-    path: /kong/consumers
+          to:
+            $map: |
+              config.env?`/kong/${config.env}/consumer`:'/kong/consumer'
+    dynamicPath: 'config.env?`/kong/${config.env}/consumers`:''/kong/consumers'''
+    paths:
+      - /kong/consumers
+      - '/kong/:env/consumers'
     icon: Consumer
     sideNav: true
     caption: Consumers
@@ -563,31 +678,41 @@ pages:
     props:
       title: Consumer
       url:
-        $map: 'params.id?`/api/kong/consumers/${params.id}`:'''''
+        $map: |
+          params.id?`${config.host || '/api/kong'}/consumers/${params.id}`:''
       schema:
         fields:
           username:
             type: string
           custom_id:
             type: string
-      successUrl: /kong/consumers
+      successUrl:
+        $map: |
+          config.env?`/kong/${config.env}/consumers`:'/kong/consumers'
       submitTo:
         method:
           $map: 'params.id?"PUT":"POST"'
-        url: /api/kong/consumers
+        url:
+          $map: |
+            `${config.host || '/api/kong'}/consumers`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id'
       - /kong/consumer
+      - '/kong/:env/consumer/:id'
+      - '/kong/:env/consumer'
   ListBasicAuth:
     description: Lists all Basic Auth's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - Basic Auth Accounts`'
+        $map: |
+          `${params.consumer} - Basic Auth Accounts`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/basic-auth`'
+        $map: >
+          `${config.host ||
+          '/api/kong'}/consumers/${params.consumer}/basic-auth`
       root: data
       mapper:
         $mapper: |-
@@ -601,11 +726,15 @@ pages:
           })
       actions:
         - link:
-            $mapper: '`/kong/consumer/${params.consumer}/basic-auth/${props.username}`'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/basic-auth/${props.username}`
           caption: Edit
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/basic-auth/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/basic-auth/${props.id}`
           message: 'Are you sure you want to delete "${username||custom_id}"?'
       footer:
         $type: Link
@@ -613,8 +742,11 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/basic-auth`'
-    path: '/kong/consumers/:consumer/basic-auth-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/basic-auth`
+    paths:
+      - '/kong/consumers/:consumer/basic-auth-accounts'
+      - '/kong/:env/consumers/:consumer/basic-auth-accounts'
   EditBasicAuth:
     description: >-
       Provides the ability to edit the settings for a configured Basic Auth on a
@@ -627,7 +759,8 @@ pages:
           - Basic Auth`
       url:
         $map: >-
-          params.name?`/api/kong/consumers/${params.id}/basic-auth/${params.name}`:''
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/basic-auth/${params.name}`:''
       mapper:
         $mapper: >-
           {username: props.username, id: props.id, consumer_id:
@@ -641,25 +774,31 @@ pages:
             type: string
             required: true
       successUrl:
-        $map: '`/kong/consumers/${params.id}/basic-auth-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/basic-auth-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/basic-auth`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/basic-auth`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/basic-auth/:name'
       - '/kong/consumer/:id/basic-auth'
+      - '/kong/:env/consumer/:id/basic-auth/:name'
+      - '/kong/:env/consumer/:id/basic-auth'
   ListOAuth2:
     description: Lists all OAuth 2's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - OAuth2 Accounts`'
+        $map: |
+          `${params.consumer} - OAuth2 Accounts`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/oauth2`'
+        $map: |
+          `${config.host || '/api/kong'}/consumers/${params.consumer}/oauth2`
       root: data
       mapper:
         $mapper: |-
@@ -673,11 +812,15 @@ pages:
           })
       actions:
         - link:
-            $mapper: '`/kong/consumer/${params.consumer}/oauth2/${props.id}`'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/oauth2/${props.id}`
           caption: Edit
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/oauth2/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/oauth2/${props.id}`
           message: 'Are you sure you want to delete "${name||custom_id}"?'
       footer:
         $type: Link
@@ -685,8 +828,11 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/oauth2`'
-    path: '/kong/consumers/:consumer/oauth2-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/oauth2`
+    paths:
+      - '/kong/consumers/:consumer/oauth2-accounts'
+      - '/kong/:env/consumers/:consumer/oauth2-accounts'
   EditOAuth2:
     description: >-
       Provides the ability to edit the settings for a configured OAuth2 on a
@@ -694,10 +840,12 @@ pages:
     $type: DataEditPage
     props:
       title:
-        $map: 'params.name?`${params.id} - OAuth2`:`${params.id} - OAuth2`'
+        $map: |
+          params.name?`${params.id} - OAuth2`:`${params.id} - OAuth2`
       url:
-        $map: >-
-          params.name?`/api/kong/consumers/${params.id}/oauth2/${params.name}`:''
+        $map: >
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/oauth2/${params.name}`:''
       mapper:
         $mapper: >-
           {name: props.name, id: props.id, consumer_id: props.consumer_id,
@@ -716,25 +864,31 @@ pages:
             type: array
             required: true
       successUrl:
-        $map: '`/kong/consumers/${params.id}/oauth2-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/oauth2-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/oauth2`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/oauth2`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/oauth2/:name'
       - '/kong/consumer/:id/oauth2'
+      - '/kong/:env/consumer/:id/oauth2/:name'
+      - '/kong/:env/consumer/:id/oauth2'
   ListHMAC:
     description: Lists all HMAC's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - HMAC Auth Accounts`'
+        $map: |
+          `${params.consumer} - HMAC Auth Accounts`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/hmac-auth`'
+        $map: |
+          `${config.host || '/api/kong'}/consumers/${params.consumer}/hmac-auth`
       root: data
       mapper:
         $mapper: |-
@@ -748,11 +902,15 @@ pages:
           })
       actions:
         - link:
-            $mapper: '`/kong/consumer/${params.consumer}/hmac-auth/${props.username}`'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/hmac-auth/${props.username}`
           caption: Edit
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/hmac-auth/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/hmac-auth/${props.id}`
           message: 'Are you sure you want to delete "${username||custom_id}"?'
       footer:
         $type: Link
@@ -760,22 +918,25 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/hmac-auth`'
-    path: '/kong/consumers/:consumer/hmac-auth-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/hmac-auth`
+    paths:
+      - '/kong/consumers/:consumer/hmac-auth-accounts'
+      - '/kong/:env/consumers/:consumer/hmac-auth-accounts'
   EditHMAC:
     description: >-
       Provides the ability to edit the settings for a configured HMAC on a
       specific consumer.
     $type: DataEditPage
-    children: null
     props:
       title:
-        $map: >-
+        $map: >
           params.name?`${params.id} - HMAC Auth - ${params.name}`:`${params.id}
           - HMAC Auth`
       url:
-        $map: >-
-          params.name?`/api/kong/consumers/${params.id}/hmac-auth/${params.name}`:''
+        $map: >
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/hmac-auth/${params.name}`:''
       mapper:
         $mapper: >-
           {username: props.username, id: props.id, consumer_id:
@@ -789,25 +950,31 @@ pages:
             type: string
             required: true
       successUrl:
-        $map: '`/kong/consumers/${params.id}/hmac-auth-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/hmac-auth-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/hmac-auth`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/hmac-auth`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/hmac-auth/:name'
       - '/kong/consumer/:id/hmac-auth'
+      - '/kong/:env/consumer/:id/hmac-auth/:name'
+      - '/kong/:env/consumer/:id/hmac-auth'
   ListKey:
     description: Lists all Key's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - HMAC Auth Accounts`'
+        $map: |
+          `${params.consumer} - HMAC Auth Accounts`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/key-auth`'
+        $map: |
+          `${config.host || '/api/kong'}/consumers/${params.consumer}/key-auth`
       root: data
       mapper:
         $mapper: |-
@@ -821,11 +988,15 @@ pages:
           })
       actions:
         - link:
-            $mapper: '`/kong/consumer/${params.consumer}/key-auth/${props.id}`'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/key-auth/${props.id}`
           caption: Edit
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/key-auth/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/key-auth/${props.id}`
           message: 'Are you sure you want to delete "${key||custom_id}"?'
       footer:
         $type: Link
@@ -833,8 +1004,11 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/key-auth`'
-    path: '/kong/consumers/:consumer/key-auth-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/key-auth`
+    paths:
+      - '/kong/consumers/:consumer/key-auth-accounts'
+      - '/kong/:env/consumers/:consumer/key-auth-accounts'
   EditKey:
     description: >-
       Provides the ability to edit the settings for a configured Key on a
@@ -842,12 +1016,13 @@ pages:
     $type: DataEditPage
     props:
       title:
-        $map: >-
+        $map: >
           params.name?`${params.id} - Key Auth - ${params.name}`:`${params.id} -
           Key Auth`
       url:
-        $map: >-
-          params.name?`/api/kong/consumers/${params.id}/key-auth/${params.name}`:''
+        $map: >
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/key-auth/${params.name}`:''
       mapper:
         $mapper: >-
           {key: props.key, id: props.id, consumer_id: props.consumer_id,
@@ -857,25 +1032,31 @@ pages:
           key:
             type: string
       successUrl:
-        $map: '`/kong/consumers/${params.id}/key-auth-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/key-auth-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/key-auth`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/key-auth`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/key-auth/:name'
       - '/kong/consumer/:id/key-auth'
+      - '/kong/:env/consumer/:id/key-auth/:name'
+      - '/kong/:env/consumer/:id/key-auth'
   ListJWT:
     description: Lists all JWT's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - JWT Auth Accounts`'
+        $map: |
+          `${params.consumer} - JWT Auth Accounts`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/jwt`'
+        $map: |
+          `${config.host || '/api/kong'}/consumers/${params.consumer}/jwt`
       root: data
       mapper:
         $mapper: |-
@@ -889,11 +1070,15 @@ pages:
           })
       actions:
         - link:
-            $mapper: '`/kong/consumer/${params.consumer}/jwt/${props.key}`'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/jwt/${props.key}`
           caption: Edit
           btnStyle: primary
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/jwt/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/jwt/${props.id}`
           message: 'Are you sure you want to delete "${key||id}"?'
       footer:
         $type: Link
@@ -901,8 +1086,11 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/jwt`'
-    path: '/kong/consumers/:consumer/jwt-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/jwt`
+    paths:
+      - '/kong/consumers/:consumer/jwt-accounts'
+      - '/kong/:env/consumers/:consumer/jwt-accounts'
   EditJWT:
     description: >-
       Provides the ability to edit the settings for a configured JWT on a
@@ -910,11 +1098,13 @@ pages:
     $type: DataEditPage
     props:
       title:
-        $map: >-
+        $map: >
           params.name?`${params.id} - JWT Auth - ${params.name}`:`${params.id} -
           JWT Auth`
       url:
-        $map: 'params.name?`/api/kong/consumers/${params.id}/jwt/${params.name}`:'''''
+        $map: >
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/jwt/${params.name}`:''
       mapper:
         $mapper: >-
           {key: props.key, id: props.id, consumer_id: props.consumer_id,
@@ -928,25 +1118,31 @@ pages:
             type: string
             required: true
       successUrl:
-        $map: '`/kong/consumers/${params.id}/jwt-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/jwt-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/jwt`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/jwt`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/jwt/:name'
       - '/kong/consumer/:id/jwt'
+      - '/kong/:env/consumer/:id/jwt/:name'
+      - '/kong/:env/consumer/:id/jwt'
   ListACL:
     description: Lists all ACL's associated with a configured consumer.
     $type: DataViewPage
     props:
       title:
-        $map: '`${params.consumer} - ACL''s`'
+        $map: |
+          `${params.consumer} - ACL's`
       url:
-        $map: '`/api/kong/consumers/${params.consumer}/acls`'
+        $map: |
+          `${config.host || '/api/kong'}/consumers/${params.consumer}/acls`
       root: data
       mapper:
         $mapper: |-
@@ -960,7 +1156,10 @@ pages:
           })
       actions:
         - caption: Delete
-          delete: '/api/kong/consumers/${consumer_id}/acls/${id}'
+          delete:
+            $mapper: >
+              `${config.host ||
+              '/api/kong'}/consumers/${props.consumer_id}/acls/${props.id}`
           message: 'Are you sure you want to delete "${group||id}"?'
       footer:
         $type: Link
@@ -968,8 +1167,11 @@ pages:
           caption: New
           className: btn btn-primary
           to:
-            $mapper: '`/kong/consumer/${params.consumer}/acl-auth`'
-    path: '/kong/consumers/:consumer/acl-auth-accounts'
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/acl-auth`
+    paths:
+      - '/kong/consumers/:consumer/acl-auth-accounts'
+      - '/kong/:env/consumers/:consumer/acl-auth-accounts'
   EditACL:
     description: >-
       Provides the ability to edit the settings for a configured ACL on a
@@ -977,9 +1179,12 @@ pages:
     $type: DataEditPage
     props:
       title:
-        $map: 'params.name?`${params.id} - ACL''s`:`${params.id} - ACL''s`'
+        $map: |
+          params.name?`${params.id} - ACL's`:`${params.id} - ACL's`
       url:
-        $map: 'params.name?`/api/kong/consumers/${params.id}/acls/${params.name}`:'''''
+        $map: >-
+          params.name?`${config.host ||
+          '/api/kong'}/consumers/${params.id}/acls/${params.name}`:''
       mapper:
         $mapper: >-
           {group: props.group, id: props.id, consumer_id: props.consumer_id,
@@ -989,38 +1194,53 @@ pages:
           group:
             type: string
       successUrl:
-        $map: '`/kong/consumers/${params.id}/acl-auth-accounts`'
+        $map: >
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/acl-auth-accounts`
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
         url:
-          $map: '`/api/kong/consumers/${params.id}/acls`'
+          $map: |
+            `${config.host || '/api/kong'}/consumers/${params.id}/acls`
       Editor:
         $component: KongForm
     paths:
       - '/kong/consumer/:id/acl-auth/:name'
       - '/kong/consumer/:id/acl-auth'
+      - '/kong/:env/consumer/:id/acl-auth/:name'
+      - '/kong/:env/consumer/:id/acl-auth'
   Certificates:
     description: Provides a listing of available certificates.
     $type: DataViewPage
     props:
       title: Kong Certificates
-      url: /api/kong/certificates
+      url:
+        $map: |
+          `${config.host || '/api/kong'}/certificates`
       root: data
       actions:
         - caption: Edit
           btnStyle: primary
-          link: '/kong/certificate/${id}'
+          link:
+            $mapper: >
+              (config.env?`/kong/${config.env}`:'/kong')+`/certificate/${props.id}`
         - caption: Delete
-          delete: '/api/kong/certificates/${id}'
+          delete:
+            $mapper: |
+              `${config.host || '/api/kong'}/certificates/${props.id}`
           message: 'Are you sure you want to delete "${cert}"?'
       footer:
         $type: Link
         props:
           caption: New
           className: btn btn-primary
-          to: /kong/certificate
-    path: /kong/certificates
+          to:
+            $mapper: |
+              (config.env?`/kong/${config.env}`:'/kong')+`/certificate`
+    dynamicPath: 'config.env?`/kong/${config.env}/certificates`:''/kong/certificates'''
+    paths:
+      - /kong/certificates
+      - '/kong/:env/certificates'
     icon: Certificate
     sideNav: true
     caption: Certificates
@@ -1031,7 +1251,8 @@ pages:
     props:
       title: Certificate
       url:
-        $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
+        $map: |
+          params.id?`${config.host || '/api/kong'}/certificates/${params.id}`:''
       schema:
         fields:
           cert:
@@ -1042,11 +1263,15 @@ pages:
             type: string
             required: true
             multiline: true
-      successUrl: /kong/certificates
+      successUrl:
+        $map: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/certificates`
       submitTo:
         method:
           $map: 'params.id?"PUT":"POST"'
-        url: /api/kong/certificates
+        url:
+          $map: |
+            `${config.host || '/api/kong'}/certificates`
         mapper:
           $mapper: |
             props.id?
@@ -1065,27 +1290,40 @@ pages:
     paths:
       - '/kong/certificate/:id'
       - /kong/certificate
+      - '/kong/:env/certificate/:id'
+      - '/kong/:env/certificate'
   SNIs:
     description: provides a listing of all configured SNI's.
     $type: DataViewPage
     props:
       title: Kong SNI
-      url: /api/kong/snis
+      url:
+        $map: 'config.host?`${config.host}/snis`:''/api/kong/snis'''
       root: data
+      mapper:
+        $mapper: |
+          props.map((row)=>Object.assign({
+              baseLink: config.env?`/kong/${config.env}`:'/kong',
+              host: config.host || '/api/kong'
+            }, row))
+      suppress:
+        - baseLink
+        - host
       actions:
-        - caption: Edit
-          btnStyle: primary
-          link: '/kong/sni/${name}'
         - caption: Delete
-          delete: '/api/kong/snis/${name}'
+          delete: '${host}/snis/${name}'
           message: 'Are you sure you want to delete "${name}"?'
       footer:
         $type: Link
         props:
           caption: New
           className: btn btn-primary
-          to: /kong/sni
-    path: /kong/snis
+          to:
+            $map: 'config.env?`/kong/${config.env}/sni`:''/kong/sni'''
+    dynamicPath: 'config.env?`/kong/${config.env}/snis`:''/kong/snis'''
+    paths:
+      - /kong/snis
+      - '/kong/:env/snis'
     icon: SNI
     sideNav: true
     caption: SNI
@@ -1114,8 +1352,8 @@ pages:
                     title: 'Certificate',
                     enum: certs.map(p=>p.id),
                     enumNames: certs.map(p=>p.cert)
-                    },
                   }
+                }
               };
               return Object.assign({}, props, {schema});
             }
@@ -1123,19 +1361,27 @@ pages:
           })();
       source:
         certs:
-          url: /api/kong/certificates
+          url:
+            $map: 'config.host?`${config.host}/certificates`:`/api/kong/certificates`'
           root: data
         data:
           url:
-            $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
-      successUrl: /kong/snis
+            $map: >-
+              params.name?`${config.host ||
+              "/api/kong/"}/snis/${params.name}`:``
+      successUrl:
+        $mapper: 'config.env?`/kong/${config.env}/snis`:`/kong/snis`'
       submitTo:
         method:
           $map: 'params.name?"PUT":"POST"'
-        url: /api/kong/snis
+        url:
+          $map: 'config.host?`${config.host}/snis`:`/api/kong/snis`'
     paths:
       - '/kong/sni/:name'
       - /kong/sni
+      - '/kong/:env/sni/:name'
+      - '/kong/:env/sni'
+basePath: 'config.env?`/kong/${config.env}`:''/kong'''
 icon:
   source: |
     <path

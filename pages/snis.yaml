@@ -2,22 +2,36 @@ description: provides a listing of all configured SNI's.
 $type: DataViewPage
 props:
   title: Kong SNI
-  url: /api/kong/snis
+  url:
+    $map: config.host?`${config.host}/snis`:'/api/kong/snis'
   root: data
+  mapper:
+    $mapper: |
+      props.map((row)=>Object.assign({
+          baseLink: config.env?`/kong/${config.env}`:'/kong',
+          host: config.host || '/api/kong'
+        }, row))
+  suppress:
+    - baseLink
+    - host
   actions:
-    - caption: Edit
-      btnStyle: primary
-      link: '/kong/sni/${name}'
+    #- caption: Edit
+    #  btnStyle: primary
+    #  link: '${baseLink}/sni/${name}'
     - caption: Delete
-      delete: '/api/kong/snis/${name}'
+      delete: '${host}/snis/${name}'
       message: 'Are you sure you want to delete "${name}"?'
   footer:
     $type: Link
     props:
       caption: New
       className: btn btn-primary
-      to: /kong/sni
-path: /kong/snis
+      to:
+        $map: config.env?`/kong/${config.env}/sni`:'/kong/sni'
+dynamicPath: config.env?`/kong/${config.env}/snis`:'/kong/snis'
+paths:
+  - /kong/snis
+  - /kong/:env/snis
 icon: SNI
 sideNav: true
 caption: SNI

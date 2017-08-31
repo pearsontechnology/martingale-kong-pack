@@ -2,7 +2,9 @@ description: Provides a listing of configured API's.
 $type: DataViewPage
 props:
   title: APIs
-  url: /api/kong/apis
+  url:
+    $map: |
+      `${config.host || "/api/kong/"}/apis`
   root: data
   columns:
     - name
@@ -12,26 +14,33 @@ props:
   mapper:
     $mapper: |
       props.map((row)=>{
+        row.baseLink =  config.env?`/kong/${config.env}`:'/kong';
+        row.host = config.host || '/api/kong';
         row.hosts = (row.hosts||[]).join(', ');
-        row.uris = (row.uris||[]).join(', ');
+        row.uris = Array.isArray(row.uris)?row.uris.join(', '):'';
         return row;
       });
   actions:
     - caption: Settings
       btnStyle: primary
-      link: '/kong/api/${name}'
+      link: '${baseLink}/api/${name}'
     - caption: Plugins
-      link: '/kong/api/${name}/plugins'
+      link: '${baseLink}/api/${name}/plugins'
     - caption: Delete
-      delete: '/api/kong/apis/${name}'
+      delete: '${host}/apis/${name}'
       message: 'Are you sure you want to delete "${name}"?'
   footer:
     $type: Link
     props:
       caption: New
       className: btn btn-primary
-      to: /kong/api
-path: /kong/apis
+      to:
+        $map: |
+          config.env?`/kong/${config.env}/api`:`/kong/api`
+dynamicPath: config.env?`/kong/${config.env}/apis`:'/kong/apis'
+paths:
+  - /kong/apis
+  - /kong/:env/apis
 icon: API
 sideNav: true
 caption: APIs

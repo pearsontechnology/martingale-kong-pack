@@ -22,8 +22,8 @@ props:
                 title: 'Certificate',
                 enum: certs.map(p=>p.id),
                 enumNames: certs.map(p=>p.cert)
-                },
               }
+            }
           };
           return Object.assign({}, props, {schema});
         }
@@ -31,16 +31,21 @@ props:
       })();
   source:
     certs:
-      url: /api/kong/certificates
+      url:
+        $map: 'config.host?`${config.host}/certificates`:`/api/kong/certificates`'
       root: data
     data:
       url:
-        $map: 'params.name?`/api/kong/snis/${params.name}`:'''''
-  successUrl: /kong/snis
+        $map: 'params.name?`${config.host || "/api/kong/"}/snis/${params.name}`:``'
+  successUrl:
+    $mapper: config.env?`/kong/${config.env}/snis`:`/kong/snis`
   submitTo:
     method:
       $map: params.name?"PUT":"POST"
-    url: /api/kong/snis
+    url:
+      $map: 'config.host?`${config.host}/snis`:`/api/kong/snis`'
 paths:
   - '/kong/sni/:name'
   - /kong/sni
+  - '/kong/:env/sni/:name'
+  - /kong/:env/sni

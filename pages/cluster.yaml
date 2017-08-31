@@ -2,9 +2,14 @@ description: Provides an overview of the current cluster.
 $type: DataViewPage
 props:
   title: Kong Cluster
-  url: /api/kong/cluster
+  url:
+    $map: |
+      `${config.host || '/api/kong'}/cluster`
   root: data
-path: /kong/cluster
+dynamicPath: config.env?`/kong/${config.env}/cluster`:'/kong/cluster'
+paths:
+  - /kong/cluster
+  - /kong/:env/cluster
 icon: Cluster
 sideNav: true
 caption: Cluster

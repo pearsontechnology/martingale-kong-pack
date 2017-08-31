@@ -4,7 +4,8 @@ children:
 props:
   title: Certificate
   url:
-    $map: 'params.id?`/api/kong/certificates/${params.id}`:'''''
+    $map: |
+      params.id?`${config.host || '/api/kong'}/certificates/${params.id}`:''
   schema:
     fields:
       cert:
@@ -15,11 +16,15 @@ props:
         type: string
         required: true
         multiline: true
-  successUrl: /kong/certificates
+  successUrl:
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/certificates`
   submitTo:
     method:
       $map: 'params.id?"PUT":"POST"'
-    url: /api/kong/certificates
+    url:
+      $map: |
+        `${config.host || '/api/kong'}/certificates`
     mapper:
       $mapper: |
         props.id?
@@ -38,3 +43,5 @@ props:
 paths:
   - '/kong/certificate/:id'
   - /kong/certificate
+  - '/kong/:env/certificate/:id'
+  - /kong/:env/certificate

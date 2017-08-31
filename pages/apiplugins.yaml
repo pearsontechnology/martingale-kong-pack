@@ -3,20 +3,16 @@ $type: DataViewPage
 props:
   title:
     $map: '`${params.name} Plugin''s`'
-  footer:
-    $type: Link
-    props:
-      caption: New
-      className: btn btn-primary
-      to:
-        $map: '`/kong/api/${params.name}/plugin`'
   url:
-    $map: '`/api/kong/apis/${params.name}/plugins`'
+    $map: |
+      `${config.host || "/api/kong/"}/apis/${params.name}/plugins`
   root: data
   mapper:
     $mapper: |
       props.map((plugin)=>{
         return {
+          baseLink:  config.env?`/kong/${config.env}`:'/kong',
+          host: config.host || '/api/kong',
           id: plugin.id,
           apiName: params.name,
           name: plugin.name,
@@ -27,11 +23,32 @@ props:
   suppress:
     - id
     - apiName
+    - enabled
   actions:
     - caption: Edit
-      link: /kong/api/${apiName}/plugin/${name}/${id}
+      link: ${baseLink}/api/${apiName}/plugin/${name}/${id}
       btnStyle: primary
     - caption: Delete
-      delete: /api/kong/apis/${apiName}/plugins/${id}
+      delete: ${host}/apis/${apiName}/plugins/${id}
       message: 'Are you sure you want to delete "${name}"?'
-path: '/kong/api/:name/plugins'
+    - caption: ${enabled?'Disable':'Enable'}
+      btnStyle: ${enabled?'warning':'success'}
+      title: Disable ${name}
+      message: |
+        `Are you sure you want to disable plugin "${name}" for "${apiName}"?`
+      fetch:
+        url: ${host}/plugins/${id}
+        method: patch
+        payload:
+          enabled: ${!enabled}
+  footer:
+    $type: Link
+    props:
+      caption: New
+      className: btn btn-primary
+      to:
+        $map: |
+          (config.env?`/kong/${config.env}`:`/kong`)+`/api/${params.name}/plugin`
+paths:
+  - '/kong/api/:name/plugins'
+  - '/kong/:env/api/:name/plugins'

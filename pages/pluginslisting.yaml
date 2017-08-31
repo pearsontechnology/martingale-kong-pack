@@ -4,10 +4,14 @@ props:
   title: Plugins
   provide:
     apis:
-      url: /api/kong/apis
+      url:
+        $map: |
+          `${config.host || "/api/kong"}/apis`
       root: data
     plugins:
-      url: /api/kong/plugins
+      url:
+        $map: |
+          `${config.host || "/api/kong"}/plugins`
       root: data
   mapper:
     $mapper: |
@@ -18,10 +22,15 @@ props:
         } = props || {};
         if(Array.isArray(apis) && Array.isArray(plugins)){
           const newData = plugins.map((row)=>{
+            row.baseLink = config.env?`/kong/${config.env}`:'/kong';
+            row.host = config.host || '/api/kong';
+
             if(row.api_id){
               const api = apis.find((api)=>api.id === row.api_id);
               if(api){
-                return Object.assign({api: api.name||row.api_id}, row);
+                return Object.assign({
+                    api: api.name||row.api_id
+                  }, row);
               }
             }
             return row;
@@ -36,29 +45,40 @@ props:
       caption: New
       className: btn btn-primary
       to:
-        $map: '`/kong/plugin`'
+        #$map: '`/kong/plugin`'
+        $map: |
+          (config.env?`/kong/${config.env}`:`/kong`)+`/plugin`
   suppress:
     - api_id
     - id
     - enabled
     - config
+    - baseLink
+    - host
   actions:
     - caption: Edit
-      link: /kong/plugin/${name}/${id}
+      link: ${baseLink}/plugin/${name}/${id}
       btnStyle: primary
     - caption: Delete
-      delete: /api/kong/plugins/${id}
+      delete: ${host}/plugins/${id}
       message: 'Are you sure you want to delete "${name}"?'
     - caption: ${enabled?'Disable':'Enable'}
       btnStyle: ${enabled?'warning':'success'}
       title: Disable ${name}
-      message: ${enabled?(typeof(api)!=='undefined'?'Are you sure you want to disable plugin "'+name+'" for "'+api+'"?':'Are you sure you want to disable plugin "'+name+'" globally?'):''}
+      message: |
+        ${enabled?(typeof(api)!=='undefined'
+          ?'Are you sure you want to disable plugin "'+name+'" for "'+api+'"?':
+          'Are you sure you want to disable plugin "'+name+'" globally?'):''
+        }
       fetch:
-        url: /api/kong/plugins/${id}
+        url: ${host}/plugins/${id}
         method: patch
         payload:
           enabled: ${!enabled}
 icon: Plugin
 sideNav: true
 caption: Plugins
-path: /kong/plugins
+dynamicPath: config.env?`/kong/${config.env}/plugins`:'/kong/plugins'
+paths:
+  - /kong/plugins
+  - /kong/:env/plugins

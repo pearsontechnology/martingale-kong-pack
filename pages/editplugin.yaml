@@ -7,17 +7,21 @@ props:
     data:
       url:
         $map: |
-          params.id?`/api/kong/plugins/${params.id}`:''
+          params.id?`${config.host || "/api/kong"}/plugins/${params.id}`:''
     schema:
       url:
         $map: |
-          `/api/kong/plugins/schema/${params.pluginName}`
+          `${config.host || "/api/kong"}/plugins/schema/${params.pluginName}`
   dataRoot: config
-  successUrl: /kong/plugins
+  successUrl:
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/plugins`
   submitTo:
     method:
       $map: 'params.id?"PUT":"POST"'
-    url: /api/kong/plugins
+    url:
+      $mapper: |
+        `${config.host || "/api/kong"}/plugins`
     mapper:
       $mapper: |
         Object.assign({name: params.pluginName}, props)
@@ -26,3 +30,5 @@ props:
 paths:
   - '/kong/plugin/:pluginName/:id'
   - '/kong/plugin/:pluginName'
+  - '/kong/:env/plugin/:pluginName/:id'
+  - '/kong/:env/plugin/:pluginName'

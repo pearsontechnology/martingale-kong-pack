@@ -2,9 +2,11 @@ description: Lists all OAuth 2's associated with a configured consumer.
 $type: DataViewPage
 props:
   title:
-    $map: '`${params.consumer} - OAuth2 Accounts`'
+    $map: |
+      `${params.consumer} - OAuth2 Accounts`
   url:
-    $map: '`/api/kong/consumers/${params.consumer}/oauth2`'
+    $map: |
+      `${config.host || '/api/kong'}/consumers/${params.consumer}/oauth2`
   root: data
   mapper:
     $mapper: |-
@@ -18,11 +20,14 @@ props:
       })
   actions:
     - link:
-        $mapper: '`/kong/consumer/${params.consumer}/oauth2/${props.id}`'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/oauth2/${props.id}`
       caption: Edit
       btnStyle: primary
     - caption: Delete
-      delete: '/api/kong/consumers/${consumer_id}/oauth2/${id}'
+      delete:
+        $mapper: |
+          `${config.host || '/api/kong'}/consumers/${props.consumer_id}/oauth2/${props.id}`
       message: 'Are you sure you want to delete "${name||custom_id}"?'
   footer:
     $type: Link
@@ -30,5 +35,8 @@ props:
       caption: New
       className: btn btn-primary
       to:
-        $mapper: '`/kong/consumer/${params.consumer}/oauth2`'
-path: '/kong/consumers/:consumer/oauth2-accounts'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/oauth2`
+paths:
+  - '/kong/consumers/:consumer/oauth2-accounts'
+  - '/kong/:env/consumers/:consumer/oauth2-accounts'

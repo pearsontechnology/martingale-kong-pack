@@ -5,7 +5,9 @@ props:
     $map: '`${params.name} - New Plugin`'
   source:
     schema:
-      url: /api/kong/plugins/enabled
+      url:
+        $map: |
+          `${config.host || "/api/kong"}/plugins/enabled`
       mapper:
         $mapper:
           fields:
@@ -16,5 +18,8 @@ props:
   Editor:
     $component: KongForm
   successUrl:
-    $mapper: '`/kong/api/${params.name}/plugin/${props.pluginType}`'
-path: '/kong/api/:name/plugin'
+    $mapper: |
+      (config.env?`/kong/${config.env}`:`/kong`)+`/api/${params.name}/plugin/${props.pluginType}`
+paths:
+  - '/kong/api/:name/plugin'
+  - '/kong/:env/api/:name/plugin'

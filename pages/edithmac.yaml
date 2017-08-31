@@ -1,14 +1,12 @@
 description: Provides the ability to edit the settings for a configured HMAC on a specific consumer.
 $type: DataEditPage
-children:
 props:
   title:
-    $map: >-
-      params.name?`${params.id} - HMAC Auth - ${params.name}`:`${params.id} -
-      HMAC Auth`
+    $map: |
+      params.name?`${params.id} - HMAC Auth - ${params.name}`:`${params.id} - HMAC Auth`
   url:
-    $map: >-
-      params.name?`/api/kong/consumers/${params.id}/hmac-auth/${params.name}`:''
+    $map: |
+      params.name?`${config.host || '/api/kong'}/consumers/${params.id}/hmac-auth/${params.name}`:''
   mapper:
     $mapper: >-
       {username: props.username, id: props.id, consumer_id:
@@ -22,14 +20,18 @@ props:
         type: string
         required: true
   successUrl:
-    $map: '`/kong/consumers/${params.id}/hmac-auth-accounts`'
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/hmac-auth-accounts`
   submitTo:
     method:
       $map: 'params.name?"PUT":"POST"'
     url:
-      $map: '`/api/kong/consumers/${params.id}/hmac-auth`'
+      $map: |
+        `${config.host || '/api/kong'}/consumers/${params.id}/hmac-auth`
   Editor:
     $component: KongForm
 paths:
   - '/kong/consumer/:id/hmac-auth/:name'
   - '/kong/consumer/:id/hmac-auth'
+  - '/kong/:env/consumer/:id/hmac-auth/:name'
+  - '/kong/:env/consumer/:id/hmac-auth'

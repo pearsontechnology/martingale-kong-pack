@@ -2,23 +2,26 @@ description: Provides the ability to create or edit a plugin configuration.
 $type: DataEditPage
 props:
   title:
-    $map: '`${params.apiName} - ${params.pluginName} Settings`'
+    $map: |
+      `${params.apiName} - ${params.pluginName} Settings`
   source:
     data:
       url:
-        $map: params.id?`/api/kong/plugins/${params.id}`:''
+        $map: |
+          params.id?`${config.host || "/api/kong"}/plugins/${params.id}`:''
     schema:
       url:
-        $map: '`/api/kong/plugins/schema/${params.pluginName}`'
+        $map: |
+          `${config.host || "/api/kong"}/plugins/schema/${params.pluginName}`
   successUrl:
     $map: |
-      `/kong/api/${params.apiName}/plugins`
+      (config.env?`/kong/${config.env}`:'/kong')+`/api/${params.apiName}/plugins`
   submitTo:
     method:
       $map: 'params.id?"PUT":"POST"'
     url:
       $mapper: |
-        `/api/kong/apis/${params.apiName}/plugins`
+        `${config.host || "/api/kong"}/apis/${params.apiName}/plugins`
     mapper:
       $mapper: |
         Object.assign({name: params.pluginName}, props)
@@ -28,3 +31,5 @@ props:
 paths:
   - '/kong/api/:apiName/plugin/:pluginName/:id'
   - '/kong/api/:apiName/plugin/:pluginName'
+  - '/kong/:env/api/:apiName/plugin/:pluginName/:id'
+  - '/kong/:env/api/:apiName/plugin/:pluginName'

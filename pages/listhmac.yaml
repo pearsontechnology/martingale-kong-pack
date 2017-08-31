@@ -2,9 +2,11 @@ description: Lists all HMAC's associated with a configured consumer.
 $type: DataViewPage
 props:
   title:
-    $map: '`${params.consumer} - HMAC Auth Accounts`'
+    $map: |
+      `${params.consumer} - HMAC Auth Accounts`
   url:
-    $map: '`/api/kong/consumers/${params.consumer}/hmac-auth`'
+    $map: |
+      `${config.host || '/api/kong'}/consumers/${params.consumer}/hmac-auth`
   root: data
   mapper:
     $mapper: |-
@@ -18,11 +20,14 @@ props:
       })
   actions:
     - link:
-        $mapper: '`/kong/consumer/${params.consumer}/hmac-auth/${props.username}`'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/hmac-auth/${props.username}`
       caption: Edit
       btnStyle: primary
     - caption: Delete
-      delete: '/api/kong/consumers/${consumer_id}/hmac-auth/${id}'
+      delete:
+        $mapper: |
+          `${config.host || '/api/kong'}/consumers/${props.consumer_id}/hmac-auth/${props.id}`
       message: 'Are you sure you want to delete "${username||custom_id}"?'
   footer:
     $type: Link
@@ -30,5 +35,8 @@ props:
       caption: New
       className: btn btn-primary
       to:
-        $mapper: '`/kong/consumer/${params.consumer}/hmac-auth`'
-path: '/kong/consumers/:consumer/hmac-auth-accounts'
+        $mapper: |
+          (config.env?`/kong/${config.env}`:'/kong')+`/consumer/${params.consumer}/hmac-auth`
+paths:
+  - '/kong/consumers/:consumer/hmac-auth-accounts'
+  - '/kong/:env/consumers/:consumer/hmac-auth-accounts'

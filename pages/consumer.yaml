@@ -3,20 +3,27 @@ $type: DataEditPage
 props:
   title: Consumer
   url:
-    $map: 'params.id?`/api/kong/consumers/${params.id}`:'''''
+    $map: |
+      params.id?`${config.host || '/api/kong'}/consumers/${params.id}`:''
   schema:
     fields:
       username:
         type: string
       custom_id:
         type: string
-  successUrl: /kong/consumers
+  successUrl:
+    $map: |
+      config.env?`/kong/${config.env}/consumers`:'/kong/consumers'
   submitTo:
     method:
       $map: 'params.id?"PUT":"POST"'
-    url: /api/kong/consumers
+    url:
+      $map: |
+        `${config.host || '/api/kong'}/consumers`
   Editor:
     $component: KongForm
 paths:
   - '/kong/consumer/:id'
   - /kong/consumer
+  - '/kong/:env/consumer/:id'
+  - /kong/:env/consumer

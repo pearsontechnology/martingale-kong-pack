@@ -15,10 +15,11 @@ config:
   env:
     type: string
     description: Environment name for the instance of the plugin.
+    default: default
   host:
     type: string
     description: Hostname or host path to the instance of the Kong API.
-    default: /api/kubernetes
+    default: /api/kong
 pages:
   KongDashboard:
     $ref: pages/kongdashboard.yaml
@@ -76,5 +77,6 @@ pages:
     $ref: pages/snis.yaml
   SNI:
     $ref: pages/sni.yaml
+basePath: config.env?`/kong/${config.env}`:'/kong'
 icon:
   $ref: icon.yaml

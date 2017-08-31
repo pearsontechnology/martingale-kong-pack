@@ -2,10 +2,11 @@ description: Provides the ability to edit the settings for a configured OAuth2 o
 $type: DataEditPage
 props:
   title:
-    $map: 'params.name?`${params.id} - OAuth2`:`${params.id} - OAuth2`'
+    $map: |
+      params.name?`${params.id} - OAuth2`:`${params.id} - OAuth2`
   url:
-    $map: >-
-      params.name?`/api/kong/consumers/${params.id}/oauth2/${params.name}`:''
+    $map: |
+      params.name?`${config.host || '/api/kong'}/consumers/${params.id}/oauth2/${params.name}`:''
   mapper:
     $mapper: >-
       {name: props.name, id: props.id, consumer_id:
@@ -25,14 +26,18 @@ props:
         type: array
         required: true
   successUrl:
-    $map: '`/kong/consumers/${params.id}/oauth2-accounts`'
+    $map: |
+      (config.env?`/kong/${config.env}`:'/kong')+`/consumers/${params.id}/oauth2-accounts`
   submitTo:
     method:
       $map: 'params.name?"PUT":"POST"'
     url:
-      $map: '`/api/kong/consumers/${params.id}/oauth2`'
+      $map: |
+        `${config.host || '/api/kong'}/consumers/${params.id}/oauth2`
   Editor:
     $component: KongForm
 paths:
   - '/kong/consumer/:id/oauth2/:name'
   - '/kong/consumer/:id/oauth2'
+  - '/kong/:env/consumer/:id/oauth2/:name'
+  - '/kong/:env/consumer/:id/oauth2'
