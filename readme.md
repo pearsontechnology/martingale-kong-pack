@@ -1,4 +1,4 @@
-# Martinglae Kong Pack
+# Martingale Kong Pack
 
 **Name:** Kong
 
