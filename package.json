@@ -5,10 +5,10 @@
   "repository": "git@github.com:pearsontechnology/martingale-kong-pack.git",
   "author": "Jeremy Darling <jeremy.darling@pearson.com>",
   "scripts": {
-    "build": "mpack build",
-    "test": "mpack test -p 8082",
-    "doc": "mpack doc",
-    "docker": "mpack docker -p 8082"
+    "build": "npx @martingale/packs build",
+    "test": "npx @martingale/packs test -p 8082",
+    "doc": "npx @martingale/packs doc",
+    "docker": "npx @martingale/packs docker -p 8082"
   },
   "dependencies": {
     "martingale-pack-builder": "^0.0.1"
