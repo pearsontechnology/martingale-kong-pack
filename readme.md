@@ -1,4 +1,4 @@
-# Martinglae Kong Pack
+# Martingale Kong Pack
 
 **Name:** Kong
 
@@ -15,20 +15,28 @@ or
 Where :env is an optional value to route to different instances.
 
 
+
 ## Configuration Options
 
+
 ### env: Environment name for the instance of the plugin.
+
 **Default Value:** default
 
+
 ### host: Hostname or host path to the instance of the Kong API.
+
 **Default Value:** /api/kong
 
+
 ## Included Pages
+
+
 ### KongDashboard: Side Nav
 
 <svg fill="currentColor" preserveAspectRatio="xMidYMid meet" height="64" width="64" viewBox="0 0 256 256" style="vertical-align: middle;">
-  <g>
-    <path
+<g>
+<path
    d="M206.24 151.84l-.584-.024-.032-.48c-.12-1.52-2.36-5.624-3.216-7.072l-.416-.72 2.48-.2c-2.04-2.624-2.512-5.52-1.296-8.064 1.096-2.28 3.464-3.936 5.64-3.936.288.024 5.68.576 5.424 10.616-.256 9.6-7.184 9.88-7.976 9.88h-.024zM176 149.28c-.104.144-.184.304-.28.448-1.104 2.296-2.4 5.384-3.536 8.184 6.208-1.6 18.456-2.88 8.68 25.88-2.76 8.112-10.624 15-21.944 19.472 1.384.24 2.936.6 4.608 1.056-9.504 2.424-22.104 4.528-37.48 4.624l1.12-.224c-23.44-.016-49.08-7.728-53.536-24.936-3.472-13.44 11.744-25.056 11.888-25.168l.592-.448s-18.72-1.936-19.6-18.416c-.864-16.48 8.456-16.128 13.408-25.8 4.96-9.664 18.64-3.864 34.72-4.32 16.08-.448 17.424 1.84 32.24-1.104 14.832-2.944 32.96 7.632 41.984 20.064 8.776 12.08-9.456 15.52-12.88 20.64l.016.048zm-122.4-5.016c-.864 1.44-3.104 5.56-3.224 7.08l-.04.48-.584.016c-.8 0-7.728-.28-7.984-9.88-.264-10.04 5.136-10.592 5.36-10.608h.016c2.224 0 4.592 1.64 5.68 3.92 1.216 2.56.744 5.44-1.296 8.064l2.48.192-.424.72.016.016z"
    fill="#ABB3C9"
    id="path4"
@@ -91,7 +99,7 @@ Where :env is an optional value to route to different instances.
    fill="#525365"
    id="path28" />
 
-  </g>
+</g>
 </svg>
 Provides a basic dashboard view of the associated Kong API Gateway.
 
@@ -101,6 +109,7 @@ Provides a basic dashboard view of the associated Kong API Gateway.
 **Path:** /kong/
 
 **Path:** /kong/:env/
+
 
 
 ### PluginsListing: Side Nav
@@ -116,6 +125,7 @@ Provides a listing of all configured plugins.
 **Path:** /kong/:env/plugins
 
 
+
 ### NewPluginSelect: 
 
 Provides the ability to select a plugin and an optional API to bind it to for configuration.
@@ -123,6 +133,7 @@ Provides the ability to select a plugin and an optional API to bind it to for co
 **Path:** /kong/plugin
 
 **Path:** /kong/:env/plugin
+
 
 
 ### EditPlugin: 
@@ -138,6 +149,7 @@ Provides the ability to create or edit an existing configured plugin for either 
 **Path:** /kong/:env/plugin/:pluginName
 
 
+
 ### Cluster: Side Nav
 
 Provides an overview of the current cluster.
@@ -149,6 +161,7 @@ Provides an overview of the current cluster.
 **Path:** /kong/cluster
 
 **Path:** /kong/:env/cluster
+
 
 
 ### APIs: Side Nav
@@ -164,6 +177,7 @@ Provides a listing of configured API&#x27;s.
 **Path:** /kong/:env/apis
 
 
+
 ### APIPlugins: 
 
 Provides a manageable listing of plugins configured on an API.
@@ -171,6 +185,7 @@ Provides a manageable listing of plugins configured on an API.
 **Path:** /kong/api/:name/plugins
 
 **Path:** /kong/:env/api/:name/plugins
+
 
 
 ### APISettings: 
@@ -186,6 +201,7 @@ Provides the ability to edit the settings for a configured API.
 **Path:** /kong/:env/api
 
 
+
 ### APIPluginConfig: 
 
 Provides the ability to create or edit a plugin configuration.
@@ -199,6 +215,7 @@ Provides the ability to create or edit a plugin configuration.
 **Path:** /kong/:env/api/:apiName/plugin/:pluginName
 
 
+
 ### APISelectNewPlugin: 
 
 Provides ability to select an API and Plugin to configure to that API.
@@ -206,6 +223,7 @@ Provides ability to select an API and Plugin to configure to that API.
 **Path:** /kong/api/:name/plugin
 
 **Path:** /kong/:env/api/:name/plugin
+
 
 
 ### Consumers: Side Nav
@@ -221,6 +239,7 @@ Provides a listing of configured consumers.
 **Path:** /kong/:env/consumers
 
 
+
 ### Consumer: 
 
 Provides the ability to edit the settings for a configured consumer.
@@ -234,6 +253,7 @@ Provides the ability to edit the settings for a configured consumer.
 **Path:** /kong/:env/consumer
 
 
+
 ### ListBasicAuth: 
 
 Lists all Basic Auth&#x27;s associated with a configured consumer.
@@ -241,6 +261,7 @@ Lists all Basic Auth&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/basic-auth-accounts
 
 **Path:** /kong/:env/consumers/:consumer/basic-auth-accounts
+
 
 
 ### EditBasicAuth: 
@@ -256,6 +277,7 @@ Provides the ability to edit the settings for a configured Basic Auth on a speci
 **Path:** /kong/:env/consumer/:id/basic-auth
 
 
+
 ### ListOAuth2: 
 
 Lists all OAuth 2&#x27;s associated with a configured consumer.
@@ -263,6 +285,7 @@ Lists all OAuth 2&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/oauth2-accounts
 
 **Path:** /kong/:env/consumers/:consumer/oauth2-accounts
+
 
 
 ### EditOAuth2: 
@@ -278,6 +301,7 @@ Provides the ability to edit the settings for a configured OAuth2 on a specific 
 **Path:** /kong/:env/consumer/:id/oauth2
 
 
+
 ### ListHMAC: 
 
 Lists all HMAC&#x27;s associated with a configured consumer.
@@ -285,6 +309,7 @@ Lists all HMAC&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/hmac-auth-accounts
 
 **Path:** /kong/:env/consumers/:consumer/hmac-auth-accounts
+
 
 
 ### EditHMAC: 
@@ -300,6 +325,7 @@ Provides the ability to edit the settings for a configured HMAC on a specific co
 **Path:** /kong/:env/consumer/:id/hmac-auth
 
 
+
 ### ListKey: 
 
 Lists all Key&#x27;s associated with a configured consumer.
@@ -307,6 +333,7 @@ Lists all Key&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/key-auth-accounts
 
 **Path:** /kong/:env/consumers/:consumer/key-auth-accounts
+
 
 
 ### EditKey: 
@@ -322,6 +349,7 @@ Provides the ability to edit the settings for a configured Key on a specific con
 **Path:** /kong/:env/consumer/:id/key-auth
 
 
+
 ### ListJWT: 
 
 Lists all JWT&#x27;s associated with a configured consumer.
@@ -329,6 +357,7 @@ Lists all JWT&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/jwt-accounts
 
 **Path:** /kong/:env/consumers/:consumer/jwt-accounts
+
 
 
 ### EditJWT: 
@@ -344,6 +373,7 @@ Provides the ability to edit the settings for a configured JWT on a specific con
 **Path:** /kong/:env/consumer/:id/jwt
 
 
+
 ### ListACL: 
 
 Lists all ACL&#x27;s associated with a configured consumer.
@@ -351,6 +381,7 @@ Lists all ACL&#x27;s associated with a configured consumer.
 **Path:** /kong/consumers/:consumer/acl-auth-accounts
 
 **Path:** /kong/:env/consumers/:consumer/acl-auth-accounts
+
 
 
 ### EditACL: 
@@ -366,6 +397,7 @@ Provides the ability to edit the settings for a configured ACL on a specific con
 **Path:** /kong/:env/consumer/:id/acl-auth
 
 
+
 ### Certificates: Side Nav
 
 Provides a listing of available certificates.
@@ -377,6 +409,7 @@ Provides a listing of available certificates.
 **Path:** /kong/certificates
 
 **Path:** /kong/:env/certificates
+
 
 
 ### Certificate: 
@@ -392,6 +425,7 @@ Provides the ability to edit the settings for a configured certificate.
 **Path:** /kong/:env/certificate
 
 
+
 ### SNIs: Side Nav
 
 provides a listing of all configured SNI&#x27;s.
@@ -403,6 +437,7 @@ provides a listing of all configured SNI&#x27;s.
 **Path:** /kong/snis
 
 **Path:** /kong/:env/snis
+
 
 
 ### SNI: 

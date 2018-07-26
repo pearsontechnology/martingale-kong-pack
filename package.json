@@ -1,6 +1,6 @@
 {
   "name": "martingale-kong-pack",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Martingale Pack file for Kong API Gateway",
   "repository": "git@github.com:pearsontechnology/martingale-kong-pack.git",
   "author": "Jeremy Darling <jeremy.darling@pearson.com>",
